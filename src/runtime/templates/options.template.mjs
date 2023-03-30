@@ -1,3 +1,5 @@
+<%= options.importStrings %>
+
 export const localeCodes = <%= JSON.stringify(options.localeCodes, null, 2) %>
 
 export const localeMessages = <%= options.localeMessages %>

@@ -10,7 +10,7 @@ import {
   NUXT_I18N_PRECOMPILED_LOCALE_KEY,
   NUXT_I18N_COMPOSABLE_DEFINE_LOCALE
 } from './constants'
-import { genDynamicImport, genObjectFromRaw } from 'knitwork'
+import { genImport, genSafeVariableName, genDynamicImport, genObjectFromRaw } from 'knitwork'
 import { parse as parsePath, normalize } from 'pathe'
 import fs from 'node:fs'
 // @ts-ignore
@@ -58,6 +58,32 @@ export function generateLoaderOptions(
   const buildImportKey = (root: string, dir: string, base: string) =>
     normalize(`${root ? `${root}/` : ''}${dir ? `${dir}/` : ''}${base}`)
 
+  function generateSyncImports(gen: string, absolutePath: string, relativePath?: string) {
+    if (!relativePath) {
+      return gen
+    }
+
+    const { root, dir, base, ext } = parsePath(relativePath)
+    const key = buildImportKey(root, dir, base)
+    if (!generatedImports.has(key)) {
+      let loadPath = relativePath
+      if (langDir) {
+        loadPath = resolveLocaleRelativePath(localesRelativeBase, langDir, relativePath)
+      }
+      const assertFormat = ext.slice(1)
+      const variableName = genSafeVariableName(`locale_${convertToImportId(key)}`)
+      gen += `${genImport(
+        genImportSpecifier(loadPath, ext, absolutePath),
+        variableName,
+        assertFormat ? { assert: { type: assertFormat } } : {}
+      )}\n`
+      importMapper.set(key, variableName)
+      generatedImports.set(key, loadPath)
+    }
+
+    return gen
+  }
+
   const localeInfo = options.localeInfo || []
   const syncLocaleFiles = new Set<LocaleInfo>()
   const asyncLocaleFiles = new Set<LocaleInfo>()
@@ -71,6 +97,16 @@ export function generateLoaderOptions(
         ;(lazy ? asyncLocaleFiles : syncLocaleFiles).add(locale)
       }
     }
+  }
+
+  /**
+   * Generate locale synthetic imports
+   */
+  const importStrings: string[] = []
+  for (const localeInfo of syncLocaleFiles) {
+    convertToPairs(localeInfo).forEach(({ file, path }) => {
+      importStrings.push(generateSyncImports('', path, file))
+    })
   }
 
   /**
@@ -100,7 +136,7 @@ export function generateLoaderOptions(
   const resolveNuxtI18nOptions = (value?: VueI18nOptions | string) => {
     const functionResolver = () => {
       if (isObject(value)) return `(${genObjectFromRaw(generateVueI18nOptions(value, misc.dev), '  ')})`
-      if (isString(value)) return `import(${value}).then(r => (r.default || r)(context))`
+      if (isString(value)) return `import("${value}").then(r => (r.default || r)(context))`
       return `({})`
     }
 
@@ -131,7 +167,8 @@ export function generateLoaderOptions(
     (file ? [file] : files || []).map(filePath => {
       const { root, dir, base } = parsePath(filePath)
       const key = buildImportKey(root, dir, base)
-      return { key: generatedImports.get(key), load: () => Promise.resolve(importMapper.get(key)) }
+      const loadKey = importMapper.get(key)
+      return { key: `"${generatedImports.get(key)}"`, load: `() => Promise.resolve(${loadKey})` }
     })
   ])
 
@@ -161,8 +198,9 @@ export function generateLoaderOptions(
   }
 
   const localeMessages = !langDir ? {} : Object.fromEntries([...mappedSyncLocales, ...mappedAsyncLocales])
-
+  debug('importStrings -', importStrings)
   return {
+    importStrings: importStrings.join(''),
     localeMessages: genObjectFromRaw(localeMessages),
     additionalMessages: genObjectFromRaw(additionalMessages),
     vueI18nOptionsLoader: resolveNuxtI18nOptions(options.nuxtI18nOptions?.vueI18n),
@@ -254,7 +292,21 @@ export function readCode(absolutePath: string, ext: string) {
   return code
 }
 
+const IMPORT_ID_CACHES = new Map<string, string>()
+
 const normalizeWithUnderScore = (name: string) => name.replace(/-/g, '_').replace(/\./g, '_').replace(/\//g, '_')
+
+function convertToImportId(file: string) {
+  if (IMPORT_ID_CACHES.has(file)) {
+    return IMPORT_ID_CACHES.get(file)
+  }
+
+  const { dir, name } = parsePath(file)
+  const id = normalizeWithUnderScore(dir + name)
+  IMPORT_ID_CACHES.set(file, id)
+
+  return id
+}
 
 function resolveLocaleRelativePath(relativeBase: string, langDir: string, file: string) {
   return normalize(`${relativeBase}/${langDir}/${file}`)

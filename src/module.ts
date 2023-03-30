@@ -192,28 +192,30 @@ export default defineNuxtModule<NuxtI18nOptions>({
 
     addTemplate({
       filename: NUXT_I18N_TEMPLATE_OPTIONS_KEY,
-      src: resolve('./src/templates/options.template.ts'),
+      src: resolve(distDir, 'runtime/templates/options.template.mjs'),
       write: true,
-      options: generateLoaderOptions(
-        options.lazy,
-        options.langDir,
-        localesRelativeBasePath,
-        {
-          localeCodes,
-          localeInfo,
-          additionalMessages,
-          nuxtI18nOptions: options,
-          nuxtI18nOptionsDefault: DEFAULT_OPTIONS,
-          nuxtI18nInternalOptions: {
-            __normalizedLocales: normalizedLocales
+      options: {
+        ...generateLoaderOptions(
+          options.lazy,
+          options.langDir,
+          localesRelativeBasePath,
+          {
+            localeCodes,
+            localeInfo,
+            additionalMessages,
+            nuxtI18nOptions: options,
+            nuxtI18nOptionsDefault: DEFAULT_OPTIONS,
+            nuxtI18nInternalOptions: {
+              __normalizedLocales: normalizedLocales
+            }
+          },
+          {
+            ssg: nuxt.options._generate,
+            ssr: nuxt.options.ssr,
+            dev: nuxt.options.dev
           }
-        },
-        {
-          ssg: nuxt.options._generate,
-          ssr: nuxt.options.ssr,
-          dev: nuxt.options.dev
-        }
-      )
+        )
+      }
     })
 
     /**
