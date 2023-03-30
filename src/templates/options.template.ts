@@ -7,7 +7,7 @@ export const additionalMessages = <%= options.additionalMessages %>
 export const resolveNuxtI18nOptions = async (context) => {
   const nuxtI18nOptions = <%= JSON.stringify(options.nuxtI18nOptions, null, 2) %>
   
-  const vueI18nOptionsLoader = <%= options.resolveNuxtI18nOptions %>
+  const vueI18nOptionsLoader = <%= options.vueI18nOptionsLoader %>
 
   return nuxtI18nOptions
 }
