@@ -27,7 +27,7 @@ import {
   extendPrefixable,
   extendSwitchLocalePathIntercepter,
   _setLocale
-} from '#build/i18n.utils.mjs'
+} from '../utils'
 import {
   getBrowserLocale as _getBrowserLocale,
   getLocaleCookie as _getLocaleCookie,

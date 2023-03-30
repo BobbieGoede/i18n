@@ -29,7 +29,7 @@ import {
   NUXT_I18N_COMPOSABLE_DEFINE_ROUTE,
   NUXT_I18N_COMPOSABLE_DEFINE_LOCALE
 } from './constants'
-import { formatMessage, getNormalizedLocales, resolveLocales, getPackageManagerType, mergeI18nModules } from './utils'
+import { formatMessage, getNormalizedLocales, resolveLocales, getPackageManagerType } from './utils'
 import { distDir, runtimeDir, pkgModulesDir } from './dirs'
 import { applyLayerOptions } from './layers'
 
@@ -80,7 +80,6 @@ export default defineNuxtModule<NuxtI18nOptions>({
       throw new Error(formatMessage(`Cannot support nuxt version: ${getNuxtVersion(nuxt)}`))
     }
 
-    await mergeI18nModules(options, nuxt)
     applyLayerOptions(options, nuxt)
 
     if (options.strategy === 'no_prefix' && options.differentDomains) {
@@ -189,32 +188,53 @@ export default defineNuxtModule<NuxtI18nOptions>({
     // for loading options
     const localesRelativeBasePath = relative(nuxt.options.buildDir, nuxt.options.srcDir)
     debug('localesRelativeBasePath', localesRelativeBasePath)
-
+    console.log(
+      generateLoaderOptions(
+        options.lazy,
+        options.langDir,
+        localesRelativeBasePath,
+        {
+          localeCodes,
+          localeInfo,
+          additionalMessages,
+          nuxtI18nOptions: options,
+          nuxtI18nOptionsDefault: DEFAULT_OPTIONS,
+          nuxtI18nInternalOptions: {
+            __normalizedLocales: normalizedLocales
+          }
+        },
+        {
+          ssg: nuxt.options._generate,
+          ssr: nuxt.options.ssr,
+          dev: nuxt.options.dev
+        }
+      )
+    )
     addTemplate({
+      //   filename: NUXT_I18N_TEMPLATE_OPTIONS_KEY,
+      src: resolve('./src/templates/options.template.ts'),
       filename: NUXT_I18N_TEMPLATE_OPTIONS_KEY,
       write: true,
-      getContents: () => {
-        return generateLoaderOptions(
-          options.lazy,
-          options.langDir,
-          localesRelativeBasePath,
-          {
-            localeCodes,
-            localeInfo,
-            additionalMessages,
-            nuxtI18nOptions: options,
-            nuxtI18nOptionsDefault: DEFAULT_OPTIONS,
-            nuxtI18nInternalOptions: {
-              __normalizedLocales: normalizedLocales
-            }
-          },
-          {
-            ssg: nuxt.options._generate,
-            ssr: nuxt.options.ssr,
-            dev: nuxt.options.dev
+      options: generateLoaderOptions(
+        options.lazy,
+        options.langDir,
+        localesRelativeBasePath,
+        {
+          localeCodes,
+          localeInfo,
+          additionalMessages,
+          nuxtI18nOptions: options,
+          nuxtI18nOptionsDefault: DEFAULT_OPTIONS,
+          nuxtI18nInternalOptions: {
+            __normalizedLocales: normalizedLocales
           }
-        )
-      }
+        },
+        {
+          ssg: nuxt.options._generate,
+          ssr: nuxt.options.ssr,
+          dev: nuxt.options.dev
+        }
+      )
     })
 
     /**
@@ -400,7 +420,6 @@ declare module '@nuxt/schema' {
 
   interface NuxtHooks {
     'i18n:extend-messages': (messages: LocaleMessages<DefineLocaleMessage>[], localeCodes: string[]) => Promise<void>
-    'i18n:registerModule': (registerModule: (config: Pick<NuxtI18nOptions, 'langDir' | 'locales'>) => void) => void
   }
 
   interface ConfigSchema {

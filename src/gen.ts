@@ -10,7 +10,7 @@ import {
   NUXT_I18N_PRECOMPILED_LOCALE_KEY,
   NUXT_I18N_COMPOSABLE_DEFINE_LOCALE
 } from './constants'
-import { genImport, genSafeVariableName, genDynamicImport } from 'knitwork'
+import { genImport, genSafeVariableName, genDynamicImport, genArrayFromRaw, genObjectFromRaw } from 'knitwork'
 import { parse as parsePath, normalize } from 'pathe'
 import fs from 'node:fs'
 // @ts-ignore
@@ -22,6 +22,8 @@ import type { NuxtI18nOptions, NuxtI18nInternalOptions, LocaleInfo } from './typ
 import type { NuxtI18nOptionsDefault } from './constants'
 import type { AdditionalMessages } from './messages'
 import type { File } from '@babel/types'
+import { I18nOptions, VueI18n, VueI18nOptions } from 'vue-i18n'
+import { DeepRequired } from 'ts-essentials'
 
 export type LoaderOptions = {
   localeCodes?: string[]
@@ -131,82 +133,91 @@ export function generateLoaderOptions(
   /**
    * Generate options
    */
-  // prettier-ignore
-  genCode += `${Object.entries(options).map(([rootKey, rootValue]) => {
-    if (rootKey === 'nuxtI18nOptions') {
-      let genCodes = `export const resolveNuxtI18nOptions = async (context) => {\n`
-      genCodes += `  const ${rootKey} = Object({})\n`
-      for (const [key, value] of Object.entries(rootValue)) {
-        if (key === 'vueI18n') {
-          const optionLoaderVariable = `${key}OptionsLoader`
-          genCodes += `  const ${optionLoaderVariable} = ${isObject(value)
-            ? `async (context) => ${generateVueI18nOptions(value, misc.dev)}\n`
-            : isString(value)
-              ? `async (context) => import(${toCode(value)}).then(r => (r.default || r)(context))\n`
-              : `async (context) => ${toCode({})}\n`
-          }`
-          genCodes += `  ${rootKey}.${key} = await ${optionLoaderVariable}(context)\n`
-          if (isString(value)) {
-            const parsedLoaderPath = parsePath(value)
-            const loaderFilename = `${parsedLoaderPath.name}${parsedLoaderPath.ext}`
-            genCodes += `  if (${rootKey}.${key}.messages) { console.warn("[${NUXT_I18N_MODULE_ID}]: Cannot include 'messages' option in '${loaderFilename}'. Please use Lazy-load translations."); ${rootKey}.${key}.messages = {}; }\n`
-          }
-        } else {
-          genCodes += `  ${rootKey}.${key} = ${toCode(key === 'locales' ? stripPathFromLocales(value) : value)}\n`
-        }
-      }
-      genCodes += `  return nuxtI18nOptions\n`
-      genCodes += `}\n`
-      return genCodes
-    } else if (rootKey === 'nuxtI18nOptionsDefault') {
-      // generate default nuxtI18n options
-      return `export const ${rootKey} = Object({${Object.entries(rootValue).map(([key, value]) => {
-        return `${key}: ${toCode(value)}`
-      }).join(`,`)}})\n`
-    } else if (rootKey === 'nuxtI18nInternalOptions') {
-      return `export const ${rootKey} = Object({${Object.entries(rootValue).map(([key, value]) => {
-        return `${key}: ${toCode(key === '__normalizedLocales' ? stripPathFromLocales(value) : value)}`
-      }).join(`,`)}})\n`
-    } else if (rootKey === 'localeInfo') {
-      let codes = `export const localeMessages = {\n`
-      if (langDir) {
-        for (const { code, file, files} of syncLocaleFiles) {
-          const syncPaths = file ? [file] : files|| []
-          codes += `  ${toCode(code)}: [${syncPaths.map(filepath => {
-            const { root, dir, base } = parsePath(filepath)
-            const key = buildImportKey(root, dir, base)
-            return `{ key: ${toCode(generatedImports.get(key))}, load: () => Promise.resolve(${importMapper.get(key)}) }`
-          })}],\n`
-        }
-        for (const localeInfo of asyncLocaleFiles) {
-          codes += `  ${toCode(localeInfo.code)}: [${convertToPairs(localeInfo).map(({ file, path }) => {
-            const { root, dir, base, ext } = parsePath(file)
-            const key = buildImportKey(root, dir, base)
-            const loadPath = resolveLocaleRelativePath(localesRelativeBase, langDir, file)
-            return `{ key: ${toCode(loadPath)}, load: ${genDynamicImport(genImportSpecifier(loadPath, ext, path), { comment: `webpackChunkName: "lang_${normalizeWithUnderScore(key)}"` })} }`
-          })}],\n`
-        }
-      }
-      codes += `}\n`
-      return codes
-    } else if (rootKey === 'additionalMessages') {
-      return `export const ${rootKey} = ${generateAdditionalMessages(rootValue, misc.dev)}\n`
-	  } else {
-	    return `export const ${rootKey} = ${toCode(rootValue)}\n`
-	  }
-  }).join('\n')}`
+
+  const resolveNuxtI18nOptions = (value?: VueI18nOptions | string) => {
+    const functionResolver = () => {
+      if (isObject(value)) return `(${genObjectFromRaw(generateVueI18nOptions(value, misc.dev))})`
+      if (isString(value)) return `import(${value}).then(r => (r.default || r)(context))`
+      return `({})`
+    }
+
+    const vueI18nOptionsLoaderFunction = [`async context => `, functionResolver()].join('')
+    const parsedLoaderPath = isString(value) ? parsePath(value) : { name: '', ext: '' }
+    const loaderFilename = `${parsedLoaderPath.name}${parsedLoaderPath.ext}`
+    // @ts-ignore
+    //   nuxtI18nOptions.locales = stripPathFromLocales(nuxtI18nOptions.locales)
+    return `
+  ${vueI18nOptionsLoaderFunction}
+  nuxtI18nOptions.vueI18n = await vueI18nOptionsLoader(context)
+  ${
+    isString(value)
+      ? `if (nuxtI18nOptions.vueI18n.messages) {
+    console.warn("[${NUXT_I18N_MODULE_ID}]: Cannot include 'messages' option in '${loaderFilename}'. Please use Lazy-load translations.")
+    nuxtI18nOptions.vueI18n.messages = {}
+  }`
+      : ''
+  }`
+  }
 
   /**
    * Generate meta info
    */
-  genCode += `export const NUXT_I18N_MODULE_ID = ${toCode(NUXT_I18N_MODULE_ID)}\n`
-  genCode += `export const NUXT_I18N_PRECOMPILE_ENDPOINT = ${toCode(NUXT_I18N_PRECOMPILE_ENDPOINT)}\n`
-  genCode += `export const NUXT_I18N_PRECOMPILED_LOCALE_KEY = ${toCode(NUXT_I18N_PRECOMPILED_LOCALE_KEY)}\n`
-  genCode += `export const isSSG = ${toCode(misc.ssg)}\n`
-  genCode += `export const isSSR = ${toCode(misc.ssr)}\n`
+  const isSSG = misc.ssg
+  const isSSR = misc.ssr
+  const additionalMessages = generateAdditionalMessages(options.additionalMessages, misc.dev)
 
+  const mappedSyncLocales = Array.from(syncLocaleFiles.values()).map(({ code, file, files }) => [
+    code,
+    (file ? [file] : files || []).map(filePath => {
+      const { root, dir, base } = parsePath(filePath)
+      const key = buildImportKey(root, dir, base)
+      return { key: generatedImports.get(key), load: () => Promise.resolve(importMapper.get(key)) }
+    })
+  ])
+
+  const mappedAsyncLocales = Array.from(asyncLocaleFiles.values()).map(localeInfo => [
+    localeInfo.code,
+    convertToPairs(localeInfo).map(({ file, path }) => {
+      const { root, dir, base, ext } = parsePath(file)
+      const key = buildImportKey(root, dir, base)
+      const loadPath = resolveLocaleRelativePath(localesRelativeBase, langDir ?? '', file)
+      return {
+        key: `"${loadPath}"`,
+        load: genDynamicImport(genImportSpecifier(loadPath, ext, path), {
+          comment: `webpackChunkName: "lang_${normalizeWithUnderScore(key)}"`
+        })
+      }
+    })
+  ])
+
+  const localeMessages = !langDir ? {} : Object.fromEntries([...mappedSyncLocales, ...mappedAsyncLocales])
+  if (options.nuxtI18nOptions?.locales) {
+    options.nuxtI18nOptions.locales = stripPathFromLocales(options.nuxtI18nOptions.locales)
+  }
   debug('generate code', genCode)
-  return genCode
+
+  return {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // loadMessages,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    localeMessages: genObjectFromRaw(localeMessages),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    additionalMessages: genObjectFromRaw(additionalMessages),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolveNuxtI18nOptions: resolveNuxtI18nOptions(options.nuxtI18nOptions?.vueI18n),
+    // : () =>
+    //   Promise.resolve({}) as <Context = unknown>(context: Context) => Promise<DeepRequired<NuxtI18nOptions<Context>>>,
+    // localeCodes: [] as string[],
+    localeCodes: options.localeCodes,
+    nuxtI18nOptions: options.nuxtI18nOptions,
+    nuxtI18nOptionsDefault: options.nuxtI18nOptionsDefault,
+    nuxtI18nInternalOptions: options.nuxtI18nInternalOptions,
+    NUXT_I18N_MODULE_ID,
+    NUXT_I18N_PRECOMPILE_ENDPOINT,
+    NUXT_I18N_PRECOMPILED_LOCALE_KEY,
+    isSSG,
+    isSSR
+  }
 }
 
 const TARGET_TS_EXTENSIONS = ['.ts', '.cts', '.mts']
@@ -296,42 +307,59 @@ function convertToImportId(file: string) {
   return id
 }
 
-function resolveLocaleRelativePath(relativeBase: string, langDir: string, file: string) {
+function resolveLocaleRelativePath(relativeBase: string, langDir: string = '', file: string = '') {
   return normalize(`${relativeBase}/${langDir}/${file}`)
 }
 
-function generateVueI18nOptions(options: Record<string, any>, dev: boolean): string {
-  let genCode = 'Object({'
-  for (const [key, value] of Object.entries(options)) {
-    if (key === 'messages') {
-      genCode += `${JSON.stringify(key)}: Object({`
-      for (const [locale, localeMessages] of Object.entries(value)) {
-        genCode += `${JSON.stringify(locale)}:${
-          generateJSON(JSON.stringify(localeMessages), { type: 'bare', env: dev ? 'development' : 'production' }).code
-        },`
-      }
-      genCode += '}),'
-    } else {
-      genCode += `${JSON.stringify(key)}:${toCode(value)},`
+function generateVueI18nOptions(options: Record<string, any>, dev: boolean) {
+  const env = dev ? 'development' : 'production'
+  const formatMessages = (val: Record<string, any>) => {
+    const m: Record<string, any> = {}
+
+    for (const [locale, messages] of Object.entries(val || {})) {
+      m[locale] = `() => Promise.resolve(${
+        generateJSON(JSON.stringify(messages, null, 2), { type: 'bare', env }).code
+      })`
     }
+    return m
   }
-  genCode += '})'
-  return genCode
+
+  const gen: Record<string, any> = {}
+  //   const generated = Object.entries(options)
+  //     .map(([key, value]) =>
+  //       key === 'messages' ? messages: formatMessages(value) : [key]: value
+  //     )
+  gen.messages = formatMessages(options.messages)
+  Object.entries(options).forEach(([key, value]) => {
+    if (key !== 'messages') gen[key] = JSON.stringify(value)
+  })
+  // console.log('generated options!', gen)
+  return gen
 }
 
-function generateAdditionalMessages(value: Record<string, any>, dev: boolean): string {
-  let genCode = 'Object({'
-  for (const [locale, messages] of Object.entries(value)) {
-    genCode += `${JSON.stringify(locale)}:[`
-    for (const [, p] of Object.entries(messages)) {
-      genCode += `() => Promise.resolve(${
-        generateJSON(JSON.stringify(p), { type: 'bare', env: dev ? 'development' : 'production' }).code
-      }),`
-    }
-    genCode += `],`
+function generateAdditionalMessages(value: AdditionalMessages | undefined, dev: boolean) {
+  const m: Record<string, any> = {}
+  for (const [locale, messages] of Object.entries(value || {})) {
+    m[locale] = Object.entries(messages)
+      .map(([, p]) => generateJSON(JSON.stringify(p), { type: 'bare', env: dev ? 'development' : 'production' }).code)
+      .map(x => `() => Promise.resolve(${x})`)
+
+    // generateJSON(JSON.stringify(p), { type: 'bare', env: dev ? 'development' : 'production' }).code
   }
-  genCode += '})'
-  return genCode
+  //   const formatMessages = (val: Record<string, any>) => {
+  //     return Object.entries(val)
+  //       .map(([, p]) => generateJSON(JSON.stringify(p), { type: 'bare', env: dev ? 'development' : 'production' }).code)
+  //       .map(x => () => Promise.resolve(x))
+  //       .join(',')
+  //   }
+
+  //   const formatLocales = (val?: Record<string, any>) => {
+  //     return Object.entries(val || {})
+  //       .map(([locale, messages]) => `${JSON.stringify(locale)}:[${formatMessages(messages)}]`)
+  //       .join(',')
+  //   }
+
+  return m
 }
 
 export function stringifyObj(obj: Record<string, any>): string {
