@@ -35,7 +35,7 @@ import {
   resolveVueI18nConfigInfo
 } from './utils'
 import { distDir, runtimeDir, pkgModulesDir } from './dirs'
-import { applyLayerOptions, resolveLayerVueI18nConfigInfo } from './layers'
+import { applyLayerOptions, checkLayerOptions, resolveLayerVueI18nConfigInfo } from './layers'
 
 import type { NuxtI18nOptions } from './types'
 
@@ -75,7 +75,7 @@ export default defineNuxtModule<NuxtI18nOptions>({
      * Check vertions
      */
 
-    checkOptions(options)
+    checkLayerOptions(options, nuxt)
 
     if (isNuxt2(nuxt)) {
       throw new Error(
@@ -91,8 +91,9 @@ export default defineNuxtModule<NuxtI18nOptions>({
       throw new Error(formatMessage(`Cannot support nuxt version: ${getNuxtVersion(nuxt)}`))
     }
 
-    await mergeI18nModules(options, nuxt)
     applyLayerOptions(options, nuxt)
+    await mergeI18nModules(options, nuxt)
+    options.locales = options.processedLocales
 
     if (options.strategy === 'no_prefix' && options.differentDomains) {
       console.warn(
@@ -124,7 +125,8 @@ export default defineNuxtModule<NuxtI18nOptions>({
           `Absolute paths will not work in production, see https://v8.i18n.nuxtjs.org/options/lazy#langdir for more details.`
       )
     }
-    const langPath = isString(options.langDir) ? resolve(nuxt.options.srcDir, options.langDir) : null
+    // const langPath = isString(options.langDir) ? resolve(nuxt.options.srcDir, options.langDir) : null
+    const langPath = resolve(nuxt.options.srcDir)
     debug('langDir path', langPath)
 
     /**
@@ -134,7 +136,7 @@ export default defineNuxtModule<NuxtI18nOptions>({
     const normalizedLocales = getNormalizedLocales(options.locales)
     const hasLocaleFiles = normalizedLocales.length > 0
     const localeCodes = normalizedLocales.map(locale => locale.code)
-    const localeInfo = langPath != null ? await resolveLocales(langPath, normalizedLocales) : []
+    const localeInfo = langPath != null && options.lazy ? await resolveLocales(langPath, normalizedLocales) : []
     debug('localeInfo', localeInfo)
 
     /**
@@ -332,32 +334,6 @@ export default defineNuxtModule<NuxtI18nOptions>({
     nuxt.options.vite.optimizeDeps.exclude.push('vue-i18n')
   }
 })
-
-function checkOptions(options: NuxtI18nOptions) {
-  // check `lazy` and `langDir` option
-  if (options.lazy && !options.langDir) {
-    throw new Error(formatMessage('When using the "lazy" option you must also set the "langDir" option.'))
-  }
-
-  // check `langDir` option
-  if (options.langDir) {
-    const locales = options.locales || []
-    if (!locales.length || isString(locales[0])) {
-      throw new Error(formatMessage('When using the "langDir" option the "locales" must be a list of objects.'))
-    }
-    for (const locale of locales) {
-      if (isString(locale) || !(locale.file || locale.files)) {
-        throw new Error(
-          formatMessage(
-            `All locales must be objects and have the "file" or "files" property set when using "langDir".` +
-              '\n' +
-              `Found none in:\n${JSON.stringify(locale, null, 2)}.`
-          )
-        )
-      }
-    }
-  }
-}
 
 type MaybePromise<T> = T | Promise<T>
 type LocaleSwitch<T extends string = string> = { oldLocale: T; newLocale: T }

@@ -68,10 +68,7 @@ export function generateLoaderOptions(
     const { root, dir, base, ext } = parsePath(relativePath)
     const key = makeImportKey(root, dir, base)
     if (!generatedImports.has(key)) {
-      let loadPath = relativePath
-      if (langDir) {
-        loadPath = resolveLocaleRelativePath(localesRelativeBase, langDir, relativePath)
-      }
+      const loadPath = resolveLocaleRelativePath(localesRelativeBase, relativePath)
       const assertFormat = ext.slice(1)
       const variableName = genSafeVariableName(`locale_${convertToImportId(key)}`)
       gen += `${genImport(
@@ -98,13 +95,13 @@ export function generateLoaderOptions(
   /**
    * Prepare locale files for synthetic or asynthetic
    */
-  if (langDir) {
-    for (const locale of localeInfo) {
-      if (!syncLocaleFiles.has(locale) && !asyncLocaleFiles.has(locale)) {
-        ;(lazy ? asyncLocaleFiles : syncLocaleFiles).add(locale)
-      }
+  // if (langDir) {
+  for (const locale of localeInfo) {
+    if (!syncLocaleFiles.has(locale) && !asyncLocaleFiles.has(locale)) {
+      ;(lazy ? asyncLocaleFiles : syncLocaleFiles).add(locale)
     }
   }
+  // }
 
   /**
    * Generate locale synthetic imports
@@ -236,7 +233,7 @@ export function generateLoaderOptions(
       }).join(`,`)}})\n`
     } else if (rootKey === 'localeInfo') {
       let codes = `export const localeMessages = {\n`
-      if (langDir) {
+      // if (langDir) {
         for (const { code, file, files} of syncLocaleFiles) {
           const syncPaths = file ? [file] : files|| []
           codes += `  ${toCode(code)}: [${syncPaths.map(filepath => {
@@ -249,11 +246,11 @@ export function generateLoaderOptions(
           codes += `  ${toCode(localeInfo.code)}: [${convertToPairs(localeInfo).map(({ file, path, hash, type }) => {
             const { root, dir, base, ext } = parsePath(file)
             const key = makeImportKey(root, dir, base)
-            const loadPath = resolveLocaleRelativePath(localesRelativeBase, langDir, file)
+            const loadPath = resolveLocaleRelativePath(localesRelativeBase, file)
             return `{ key: ${toCode(loadPath)}, load: ${genDynamicImport(genImportSpecifier(loadPath, ext, path, type, { hash, query: { locale: localeInfo.code } }), { comment: `webpackChunkName: "lang_${normalizeWithUnderScore(key)}"` })} }`
           })}],\n`
         }
-      }
+      // }
       codes += `}\n`
       return codes
 	  } else {
@@ -321,8 +318,8 @@ function convertToImportId(file: string) {
   return id
 }
 
-function resolveLocaleRelativePath(relativeBase: string, langDir: string, file: string) {
-  return normalize(`${relativeBase}/${langDir}/${file}`)
+function resolveLocaleRelativePath(relativeBase: string, file: string) {
+  return normalize(`${relativeBase}/${file}`)
 }
 
 /* eslint-enable @typescript-eslint/no-explicit-any */

@@ -3,9 +3,105 @@ import LayerModule from './layer-module'
 import ModuleExperimental from './module-experimental'
 import type { NuxtApp } from 'nuxt/dist/app/index'
 
+// const i18nOptions = {
+//   experimental: {
+//     jsTsFormatResource: true
+//   },
+//   compilation: {
+//     // jit: false,
+//     strictMessage: false,
+//     escapeHtml: true
+//   },
+//   // langDir: 'locales',
+//   // lazy: true,
+//   langDir: undefined,
+//   lazy: false,
+
+//   baseUrl: 'http://localhost:3000',
+//   locales: [
+//     {
+//       code: 'en',
+//       iso: 'en-US',
+//       file: 'en.json',
+//       // domain: 'localhost',
+//       name: 'English'
+//     },
+//     {
+//       code: 'en-GB',
+//       iso: 'en-GB',
+//       files: ['en.json', 'en-GB.js', 'en-KK.js'],
+//       name: 'English (UK)'
+//     },
+//     {
+//       code: 'ja',
+//       iso: 'ja-JP',
+//       file: 'ja.ts',
+//       domain: 'mydomain.com',
+//       name: 'Japanses'
+//     },
+//     {
+//       code: 'fr',
+//       iso: 'fr-FR',
+//       file: 'fr.json',
+//       domain: 'project-fr.example.com',
+//       name: 'Français'
+//     }
+//   ],
+//   // trailingSlash: true,
+//   // debug: true,
+//   defaultLocale: 'en',
+//   // strategy: 'no_prefix',
+//   // strategy: 'prefix',
+//   // strategy: 'prefix_and_default',
+//   // strategy: 'prefix_except_default',
+//   // rootRedirect: '/ja/about-ja',
+//   dynamicRouteParams: true,
+//   // customRoutes: 'config',
+//   pages: {
+//     history: {
+//       ja: '/history-ja'
+//     },
+//     about: {
+//       ja: '/about-ja'
+//     }
+//   },
+//   // differentDomains: true,
+//   // skipSettingLocaleOnNavigate: true,
+//   detectBrowserLanguage: false,
+//   // detectBrowserLanguage: {
+//   //   // useCookie: true
+//   //   // alwaysRedirect: true
+//   //   // cookieKey: 'i18n_redirected',
+//   //   // // cookieKey: 'my_custom_cookie_name',
+//   //   // redirectOn: 'root'
+//   // },
+//   vueI18n: './vue-i18n.options.ts'
+// }
+const i18nOptions = {
+  lazy: false,
+  baseUrl: 'http://localhost:3000',
+  locales: [
+    {
+      code: 'en',
+      iso: 'en',
+      name: 'English'
+    },
+    {
+      code: 'fr',
+      iso: 'fr-FR',
+      name: 'Français'
+    }
+  ],
+  defaultLocale: 'en',
+  detectBrowserLanguage: false
+}
+
 // https://nuxt.com/docs/guide/directory-structure/nuxt.config
 export default defineNuxtConfig({
-  extends: ['layers/i18n-layer'],
+  extends: [
+    // '../layers-external/i18n-layer',
+    'layers/i18n-layer'
+  ],
   modules: [
     (_, nuxt) => {
       console.log(nuxt.options._installedModules)
@@ -88,7 +184,7 @@ export default defineNuxtConfig({
       }
     ],
   */
-    '@nuxtjs/i18n',
+    ['@nuxtjs/i18n', process.env.INLINE_CONFIG ? i18nOptions : {}],
     '@nuxt/devtools'
   ],
   vite: {
@@ -96,7 +192,8 @@ export default defineNuxtConfig({
       minify: false
     }
   },
-
+  // @ts-ignore
+  i18n: !process.env.INLINE_CONFIG ? i18nOptions : {}
   // app: {
   //   pageTransition: {
   //     name: 'foo',

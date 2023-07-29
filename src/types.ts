@@ -81,6 +81,7 @@ export type NuxtI18nOptions<Context = unknown> = {
    * @internal
    */
   i18nModules?: { langDir?: string | null; locales?: I18nRoutingOptions<Context>['locales'] }[]
+  processedLocales?: string[] | LocaleObject[]
   rootRedirect?: string | null | RootRedirectOptions
   routesNameSeparator?: string
   skipSettingLocaleOnNavigate?: boolean

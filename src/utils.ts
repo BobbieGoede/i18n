@@ -450,19 +450,21 @@ export const mergeConfigLocales = (configs: LocaleConfig[], baseLocales: LocaleO
 export const mergeI18nModules = async (options: NuxtI18nOptions, nuxt: Nuxt) => {
   const projectLayer = nuxt.options._layers[0]
 
-  if (projectLayer.config.i18n) projectLayer.config.i18n.i18nModules = []
+  if (options) options.i18nModules = []
   const registerI18nModule = (config: Pick<NuxtI18nOptions, 'langDir' | 'locales'>) => {
     if (config.langDir == null) return
-    projectLayer.config.i18n?.i18nModules?.push(config)
+    options?.i18nModules?.push(config)
   }
 
   await nuxt.callHook('i18n:registerModule', registerI18nModule)
-  const modules = projectLayer.config.i18n?.i18nModules ?? []
-  const projectLangDir = getProjectPath(nuxt, projectLayer.config.i18n?.langDir ?? '')
+  const modules = options?.i18nModules ?? []
+  const projectLangDir = getProjectPath(nuxt, nuxt.options.rootDir)
+
+  if (projectLayer.config.i18n == null) projectLayer.config.i18n = { locales: [] }
 
   if (modules.length > 0) {
     const baseLocales: LocaleObject[] = []
-    const layerLocales = projectLayer.config.i18n?.locales ?? []
+    const layerLocales = options.processedLocales ?? []
 
     for (const locale of layerLocales) {
       if (typeof locale !== 'object') continue
@@ -474,10 +476,16 @@ export const mergeI18nModules = async (options: NuxtI18nOptions, nuxt: Nuxt) => 
       baseLocales
     )
 
-    if (projectLayer.config.i18n) {
-      options.locales = mergedLocales
-      projectLayer.config.i18n.locales = mergedLocales
-    }
+    if (options.processedLocales == null) options.processedLocales = []
+    // @ts-ignore
+    options.processedLocales = mergedLocales
+
+    // projectLayer.config.i18n.locales = mergedLocales
+
+    // if (projectLayer.config.i18n) {
+    // options.locales = mergedLocales
+    // projectLayer.config.i18n.locales = mergedLocales
+    // }
   }
 }
 

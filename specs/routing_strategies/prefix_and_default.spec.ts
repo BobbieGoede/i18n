@@ -24,6 +24,7 @@ describe('strategy: prefix_and_default', async () => {
     const page = await createPage()
     await page.goto(home)
 
+    console.log(await getText(page, '#home-header'))
     // `en` rendering
     expect(await getText(page, '#home-header')).toMatch('Homepage')
     expect(await getText(page, 'title')).toMatch('Homepage')
