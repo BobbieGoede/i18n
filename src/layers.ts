@@ -1,17 +1,26 @@
 import createDebug from 'debug'
+import { defu } from 'defu'
 import { resolve } from 'pathe'
 import { isArray, isString } from '@intlify/shared'
 import { NUXT_I18N_MODULE_ID } from './constants'
-import { formatMessage, getProjectPath, mergeConfigLocales, resolveVueI18nConfigInfo } from './utils'
+import { LocaleConfig, formatMessage, getProjectPath, mergeConfigLocales, resolveVueI18nConfigInfo } from './utils'
 
 import type { Nuxt, NuxtConfigLayer } from '@nuxt/schema'
-import type { LocaleObject } from 'vue-i18n-routing'
 import type { NuxtI18nOptions } from './types'
 
 const debug = createDebug('@nuxtjs/i18n:layers')
 
 export const checkLayerOptions = (options: NuxtI18nOptions, nuxt: Nuxt) => {
   const project = nuxt.options._layers[0]
+
+  const { overrides, ...mergedOptions } = options
+
+  if (overrides) {
+    delete options.overrides
+    project.config.i18n = defu(overrides, project.config.i18n)
+    Object.assign(options, defu(overrides, mergedOptions))
+  }
+
   const layers = nuxt.options._layers
 
   for (const layer of layers) {
@@ -98,80 +107,25 @@ function getLayerI18n(configLayer: NuxtConfigLayer) {
 
 export const mergeLayerLocales = (options: NuxtI18nOptions, nuxt: Nuxt) => {
   debug('project layer `lazy` option', options.lazy)
+  const projectLangDir = getProjectPath(nuxt, nuxt.options.srcDir)
+  options.locales ??= []
 
-  /**
-   * Merge locales when `lazy: false`
-   */
-  const mergeSimpleLocales = () => {
-    if (options.locales == null) options.locales = []
-
-    const firstI18nLayer = nuxt.options._layers.find(layer => {
+  const configs: LocaleConfig[] = nuxt.options._layers
+    .filter(layer => {
       const i18n = getLayerI18n(layer)
-      return i18n?.locales && i18n?.locales?.length > 0
+      return i18n?.locales != null
     })
-    if (firstI18nLayer == null) return []
-
-    const localeType = typeof getLayerI18n(firstI18nLayer)?.locales?.at(0)
-    const isStringLocales = (val: unknown): val is string[] => localeType === 'string'
-
-    const mergedLocales: string[] | LocaleObject[] = []
-
-    /*
-      Layers need to be reversed to ensure that the original first layer (project)
-      has the highest priority in merging (because in the reversed array it gets merged last)
-    */
-    const reversedLayers = [...nuxt.options._layers].reverse()
-    for (const layer of reversedLayers) {
+    .map(layer => {
       const i18n = getLayerI18n(layer)
-      debug('layer.config.i18n.locales', i18n?.locales)
-      if (i18n?.locales == null) continue
-
-      for (const locale of i18n.locales) {
-        if (isStringLocales(mergedLocales)) {
-          if (typeof locale !== 'string') continue
-          if (mergedLocales.includes(locale)) continue
-
-          mergedLocales.push(locale)
-          continue
-        }
-
-        if (typeof locale === 'string') continue
-        const localeEntry = mergedLocales.find(x => x.code === locale.code)
-
-        if (localeEntry == null) {
-          mergedLocales.push(locale)
-        } else {
-          Object.assign(localeEntry, locale, localeEntry)
-        }
+      return {
+        ...i18n,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        langDir: resolve(layer.config.srcDir, i18n?.langDir ?? layer.config.srcDir),
+        projectLangDir
       }
-    }
+    })
 
-    return mergedLocales
-  }
-
-  const mergeLazyLocales = () => {
-    const projectLangDir = getProjectPath(nuxt, nuxt.options.srcDir)
-    debug('project path', getProjectPath(nuxt))
-
-    const configs = nuxt.options._layers
-      .filter(layer => {
-        const i18n = getLayerI18n(layer)
-        return i18n?.locales != null && i18n?.langDir != null
-      })
-      .map(layer => {
-        const i18n = getLayerI18n(layer)
-        return {
-          ...i18n,
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          langDir: resolve(layer.config.srcDir, i18n!.langDir!),
-          projectLangDir
-        }
-      })
-
-    return mergeConfigLocales(configs)
-  }
-
-  return options.lazy ? mergeLazyLocales() : mergeSimpleLocales()
+  return mergeConfigLocales(configs)
 }
 
 /**

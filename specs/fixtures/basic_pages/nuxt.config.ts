@@ -3,6 +3,7 @@ import CustomModule from './module'
 // https://nuxt.com/docs/guide/directory-structure/nuxt.config
 export default defineNuxtConfig({
   modules: [CustomModule, '@nuxtjs/i18n'],
+  // extends: [`../layers/layer-pages`],
 
   i18n: {
     lazy: false,
@@ -11,14 +12,14 @@ export default defineNuxtConfig({
       {
         code: 'en',
         iso: 'en',
-        name: 'English',
-        file: 'en-US.json'
+        name: 'English'
+        // file: 'en-US.json'
       },
       {
         code: 'fr',
         iso: 'fr-FR',
-        name: 'Français',
-        file: 'fr-FR.json'
+        name: 'Français'
+        // file: 'fr-FR.json'
       }
     ],
     defaultLocale: 'en',

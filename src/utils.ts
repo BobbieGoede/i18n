@@ -377,20 +377,21 @@ export function parseSegment(segment: string) {
 
 export const resolveRelativeLocales = (
   relativeFileResolver: (files: string[]) => string[],
-  locale: LocaleObject,
-  merged: LocaleObject | undefined
+  locale: LocaleObject | string,
+  merged: LocaleObject | string | undefined
 ) => {
-  if (typeof locale === 'string') return merged
+  if (typeof locale === 'string') return merged ?? locale
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { file, files, ...entry } = locale
 
   const fileEntries = getLocaleFiles(locale)
   const relativeFiles = relativeFileResolver(fileEntries)
+  const mergedLocaleObject = typeof merged === 'string' ? undefined : merged
   return {
     ...entry,
-    ...merged,
-    files: [...relativeFiles, ...(merged?.files ?? [])]
+    ...mergedLocaleObject,
+    files: [...(relativeFiles ?? []), ...(mergedLocaleObject?.files ?? [])]
   }
 }
 
@@ -400,7 +401,7 @@ export const getLocaleFiles = (locale: LocaleObject): string[] => {
   return []
 }
 
-export const localeFilesToRelative = (projectLangDir: string, layerLangDir: string, files: string[]) => {
+export const localeFilesToRelative = (projectLangDir: string, layerLangDir: string = '', files: string[] = []) => {
   const absoluteFiles = files.map(file => resolve(layerLangDir, file))
   const relativeFiles = absoluteFiles.map(file => relative(projectLangDir, file))
 
@@ -413,9 +414,9 @@ export const getProjectPath = (nuxt: Nuxt, ...target: string[]) => {
 }
 
 export type LocaleConfig = {
-  projectLangDir?: string | null
+  projectLangDir: string
   langDir?: string | null
-  locales?: (string | LocaleObject)[]
+  locales?: string[] | LocaleObject[]
 }
 /**
  * Generically merge LocaleObject locales
@@ -424,20 +425,19 @@ export type LocaleConfig = {
  * @param baseLocales optional array of locale objects to merge configs into
  */
 export const mergeConfigLocales = (configs: LocaleConfig[], baseLocales: LocaleObject[] = []) => {
-  const mergedLocales = new Map<string, LocaleObject>()
+  const mergedLocales = new Map<string, LocaleObject | string>()
   baseLocales.forEach(locale => mergedLocales.set(locale.code, locale))
+
+  const getLocaleCode = (val: string | LocaleObject) => (typeof val === 'string' ? val : val.code)
 
   for (const { locales, langDir, projectLangDir } of configs) {
     if (locales == null) continue
-    if (langDir == null) continue
-    if (projectLangDir == null) continue
 
     for (const locale of locales) {
-      if (typeof locale === 'string') continue
-
-      const filesResolver = (files: string[]) => localeFilesToRelative(projectLangDir, langDir, files)
-      const resolvedLocale = resolveRelativeLocales(filesResolver, locale, mergedLocales.get(locale.code))
-      if (resolvedLocale != null) mergedLocales.set(locale.code, resolvedLocale)
+      const code = getLocaleCode(locale)
+      const filesResolver = (files: string[]) => localeFilesToRelative(projectLangDir, langDir ?? '', files)
+      const resolvedLocale = resolveRelativeLocales(filesResolver, locale, mergedLocales.get(code))
+      if (resolvedLocale != null) mergedLocales.set(code, resolvedLocale)
     }
   }
 

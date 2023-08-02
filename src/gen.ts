@@ -311,8 +311,8 @@ function convertToImportId(file: string) {
     return IMPORT_ID_CACHES.get(file)
   }
 
-  const { name } = parsePath(file)
-  const id = normalizeWithUnderScore(name)
+  const { name, dir } = parsePath(file)
+  const id = normalizeWithUnderScore(`${dir}/${name}`)
   IMPORT_ID_CACHES.set(file, id)
 
   return id

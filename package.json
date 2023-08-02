@@ -42,7 +42,7 @@
   ],
   "scripts": {
     "prepare": "git config --local core.hooksPath .githooks",
-    "build": "nuxi build-module . --sourcemap",
+    "build": "nuxi build-module .",
     "stub": "nuxi build-module --stub .",
     "prepack": "pnpm build",
     "release": "bumpp --commit \"release: v%s\" --push --tag",

@@ -17,8 +17,8 @@
       "request": "launch",
       "name": "Launch Fixture",
       "skipFiles": ["<node_internals>/**"],
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["nuxi", "dev", "specs/fixtures/lazy"]
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vitest", "basic_pages"]
     },
     {
       "type": "node",

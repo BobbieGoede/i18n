@@ -136,7 +136,7 @@ export default defineNuxtModule<NuxtI18nOptions>({
     const normalizedLocales = getNormalizedLocales(options.locales)
     const hasLocaleFiles = normalizedLocales.length > 0
     const localeCodes = normalizedLocales.map(locale => locale.code)
-    const localeInfo = langPath != null && options.lazy ? await resolveLocales(langPath, normalizedLocales) : []
+    const localeInfo = langPath != null ? await resolveLocales(langPath, normalizedLocales) : []
     debug('localeInfo', localeInfo)
 
     /**
