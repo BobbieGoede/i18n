@@ -10,8 +10,8 @@ body:
         👉 https://nuxt.com/docs/community/reporting-bugs
 
         Please use a template below to create a minimal reproduction, and provide to us your issue cases
-        👉 https://stackblitz.com/github/nuxt/starter/tree/v3-stackblitz
-        👉 https://codesandbox.io/p/github/nuxt/starter/v3-codesandbox
+        * [reproduction starter (v8 and higher)](https://stackblitz.com/fork/github/BobbieGoede/nuxt-i18n-starter/tree/v8)
+        * [reproduction starter (edge)](https://codesandbox.io/p/github/nuxt/starter/v3-codesandbox)
   - type: textarea
     id: bug-env
     attributes:
