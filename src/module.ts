@@ -32,12 +32,14 @@ import {
   getPackageManagerType,
   mergeI18nModules,
   applyOptionOverrides,
-  getLocaleFiles
+  getLocaleFiles,
+  getLocalePaths
 } from './utils'
 import { distDir, runtimeDir, pkgModulesDir } from './dirs'
 import { applyLayerOptions, checkLayerOptions, resolveLayerVueI18nConfigInfo } from './layers'
 
 import type { NuxtI18nOptions } from './types'
+import { LocaleObject } from 'vue-i18n-routing'
 
 export * from './types'
 
@@ -142,7 +144,6 @@ export default defineNuxtModule<NuxtI18nOptions>({
     /**
      * resolve locale info
      */
-
     const normalizedLocales = getNormalizedLocales(options.locales)
     const localeCodes = normalizedLocales.map(locale => locale.code)
     const localeInfo = await resolveLocales(
@@ -214,8 +215,19 @@ export default defineNuxtModule<NuxtI18nOptions>({
         ...generateLoaderOptions({
           vueI18nConfigPaths,
           localeInfo,
-          nuxtI18nOptions: options
+          lazy: options.lazy
         }),
+        nuxtI18nOptions: {
+          ...options,
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          locales: (options.locales as LocaleObject[]).map(({ meta, ...locale }) => {
+            if (Object.keys(locale).filter(k => !['iso', 'code'].includes(k)).length === 0) {
+              return locale.code
+            }
+
+            return { ...locale, files: getLocalePaths(locale) }
+          })
+        },
         NUXT_I18N_MODULE_ID,
         localeCodes,
         nuxtI18nOptionsDefault: DEFAULT_OPTIONS,
