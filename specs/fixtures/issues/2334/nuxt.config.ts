@@ -3,7 +3,6 @@ export default defineNuxtConfig({
   ssr: false,
   modules: ['@nuxtjs/i18n'],
   i18n: {
-    debug: true,
     strategy: 'no_prefix'
   }
 })

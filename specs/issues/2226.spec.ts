@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { setup, createPage, url } from '../utils'
 import { getText } from '../helper'
 
-describe('#2226', async () => {
+describe('#2226 - `strategy: "prefix_and_default"` breaks navigation on default locale', async () => {
   await setup({
     rootDir: fileURLToPath(new URL(`../fixtures/issues/2226`, import.meta.url))
   })

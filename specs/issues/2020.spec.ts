@@ -4,7 +4,7 @@ import { URL } from 'node:url'
 import { setup, url, createPage } from '../utils'
 import { getText } from '../helper'
 
-describe('#2020', async () => {
+describe('#2020 - Query parameters lost when using `localePath`', async () => {
   await setup({
     rootDir: fileURLToPath(new URL(`../fixtures/issues/2020`, import.meta.url))
   })

@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { setup, createPage, url } from '../utils'
 import { getText } from '../helper'
 
-describe('#2000', async () => {
+describe('#2000 - Large translations throw error', async () => {
   await setup({
     rootDir: fileURLToPath(new URL(`../fixtures/issues/2000`, import.meta.url)),
     browser: true

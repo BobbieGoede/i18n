@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { setup, createPage, url } from '../utils'
 import { getText } from '../helper'
 
-describe('#2132', async () => {
+describe('#2132 - `redirectOn: "no prefix"` does not redirect on root URL', async () => {
   await setup({
     rootDir: fileURLToPath(new URL(`../fixtures/issues/2132`, import.meta.url)),
     browser: true

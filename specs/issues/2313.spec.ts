@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { setup, url, createPage } from '../utils'
 import { getText } from '../helper'
 
-describe('#2313', async () => {
+describe('#2313 - `differentDomains: true` conflicting with `ssr: false`', async () => {
   await setup({
     rootDir: fileURLToPath(new URL(`../fixtures/issues/2313`, import.meta.url))
   })

@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { setup, createPage, url } from '../utils'
 import { getText } from '../helper'
 
-describe('#2220', async () => {
+describe('#2220 - I18n does not work in server middleware', async () => {
   await setup({
     rootDir: fileURLToPath(new URL(`../fixtures/issues/2220`, import.meta.url))
   })

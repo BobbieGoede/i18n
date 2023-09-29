@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { setup, $fetch } from '../utils'
 import { getDom } from '../helper'
 
-describe('#2374', async () => {
+describe('#2374 - `differentDomains: true` render incorrect locale messages', async () => {
   await setup({
     rootDir: fileURLToPath(new URL(`../fixtures/issues/2374`, import.meta.url))
   })

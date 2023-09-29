@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { URL } from 'node:url'
 import { setup, url, createPage } from '../utils'
 
-describe('#2288', async () => {
+describe('#2288 - `setLocale()` changes locale but does not navigate', async () => {
   await setup({
     rootDir: fileURLToPath(new URL(`../fixtures/issues/2288`, import.meta.url))
   })

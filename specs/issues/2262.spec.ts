@@ -4,7 +4,7 @@ import { URL } from 'node:url'
 import { setup, url, createPage } from '../utils'
 import { getText } from '../helper'
 
-describe('#2262', async () => {
+describe('#2262 - `alwaysRedirect` with `strategy: "prefix"` does not redirect to cookie locale on reload', async () => {
   await setup({
     rootDir: fileURLToPath(new URL(`../fixtures/issues/2262`, import.meta.url))
   })

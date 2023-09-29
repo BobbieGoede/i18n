@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { setup, url, createPage } from '../utils'
 import { getData } from '../helper'
 
-describe('#2338', async () => {
+describe('#2338 - Accessing `localeProperties` in component using local scope throws error', async () => {
   await setup({
     rootDir: fileURLToPath(new URL(`../fixtures/issues/2338`, import.meta.url))
   })

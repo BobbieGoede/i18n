@@ -27,7 +27,6 @@ export default defineNuxtConfig({
     experimental: {
       jsTsFormatResource: true
     },
-    // debug: true,
     detectBrowserLanguage: {
       useCookie: true,
       cookieSecure: true,

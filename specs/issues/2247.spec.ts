@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { setup, createPage, url } from '../utils'
 import { getText } from '../helper'
 
-describe('#2247', async () => {
+describe('#2247 - Navigating from a prefixed route to home page does not work', async () => {
   await setup({
     rootDir: fileURLToPath(new URL(`../fixtures/issues/2247`, import.meta.url))
   })

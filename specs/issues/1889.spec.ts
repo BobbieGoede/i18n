@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { setup, createPage, url } from '../utils'
 import { getText } from '../helper'
 
-describe('#1889', async () => {
+describe('#1889 - Unable to navigate to page with `defineI18nRoute(false)`', async () => {
   await setup({
     rootDir: fileURLToPath(new URL(`../fixtures/issues/1889`, import.meta.url))
   })

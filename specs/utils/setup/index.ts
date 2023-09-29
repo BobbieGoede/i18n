@@ -5,7 +5,7 @@ import { createBrowser } from '../browser'
 import type { TestHooks, TestOptions } from '../types'
 import setupJest from './jest'
 import setupVitest from './vitest'
-import consola from 'consola'
+// import consola from 'consola'
 
 export const setupMaps = {
   jest: setupJest,
@@ -17,7 +17,9 @@ export function createTest(options: Partial<TestOptions>): TestHooks {
 
   const beforeEach = () => {
     setTestContext(ctx)
-    consola.restoreConsole()
+    // if (!process.env.CI) {
+    //   consola.restoreConsole()
+    // }
   }
 
   const afterEach = () => {

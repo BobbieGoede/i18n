@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { setup, createPage, url } from '../utils'
 import { getText } from '../helper'
 
-describe('#2151', async () => {
+describe('#2151 - Locale messages not generated with `autoImport` disabled', async () => {
   await setup({
     rootDir: fileURLToPath(new URL(`../fixtures/issues/2151`, import.meta.url)),
     browser: true

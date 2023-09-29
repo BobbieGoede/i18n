@@ -4,7 +4,7 @@ import { URL } from 'node:url'
 import { setup, url, createPage } from '../utils'
 import { getText } from '../helper'
 
-describe('#2255', async () => {
+describe('#2255 - Does not redirect on reload', async () => {
   await setup({
     rootDir: fileURLToPath(new URL(`../fixtures/issues/2255`, import.meta.url))
   })

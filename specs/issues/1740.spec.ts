@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { setup, createPage, url } from '../utils'
 import { getText } from '../helper'
 
-describe('#1740', async () => {
+describe('#1740 - I18n module installed on layer', async () => {
   await setup({
     rootDir: fileURLToPath(new URL(`../fixtures/issues/1740`, import.meta.url)),
     browser: true

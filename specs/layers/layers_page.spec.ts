@@ -16,8 +16,7 @@ describe('nuxt layers-pages', async () => {
 
   test('layer provides locale `nl`', async () => {
     const home = url('/nl/layer-page')
-    const page = await createPage(undefined, { locale: 'ja' }) // set browser locale
-    await page.goto(home)
+    const page = await createPage(home)
 
     expect(await getText(page, '#i18n-layer-target')).toEqual('Hallo wereld!')
   })

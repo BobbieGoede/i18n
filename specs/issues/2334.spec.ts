@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { setup, url, createPage } from '../utils'
 import { getText } from '../helper'
 
-describe('#2334', async () => {
+describe('#2334 - `ssr: false` with `strategy: "no_prefix"` stuck in redirection loop', async () => {
   await setup({
     rootDir: fileURLToPath(new URL(`../fixtures/issues/2334`, import.meta.url))
   })

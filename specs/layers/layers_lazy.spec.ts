@@ -14,8 +14,7 @@ await setup({
 describe('nuxt layers-lazy', async () => {
   test('layer provides locale `nl` and translation for key `hello`', async () => {
     const home = url('/layer-page')
-    const page = await createPage()
-    await page.goto(home)
+    const page = await createPage(home)
 
     expect(await getText(page, '#i18n-layer-target')).toEqual('Hello world!')
 

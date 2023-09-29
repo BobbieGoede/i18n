@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { setup, url, createPage } from '../utils'
 import { getText } from '../helper'
 
-describe('#2315', async () => {
+describe('#2315 - Local scope translations do not work in legacy API mode', async () => {
   await setup({
     rootDir: fileURLToPath(new URL(`../fixtures/issues/2315`, import.meta.url))
   })
