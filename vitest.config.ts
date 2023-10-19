@@ -1,6 +1,12 @@
 import { defineConfig, configDefaults } from 'vitest/config'
+import { resolve } from 'node:path'
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@nuxt/test-utils': resolve('./specs/utils/index.ts')
+    }
+  },
   test: {
     globals: true,
     clearMocks: true,
