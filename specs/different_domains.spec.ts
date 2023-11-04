@@ -38,7 +38,8 @@ describe('detection locale with host on server', () => {
   ])('%s host', async (locale, host, header) => {
     const html = await $fetch('/', {
       headers: {
-        Host: host
+        // Host: host
+        'X-Forwarded-Host': host
       }
     })
     const dom = getDom(html)
@@ -63,7 +64,8 @@ test('detection locale with x-forwarded-host on server', async () => {
 test('pass `<NuxtLink> to props', async () => {
   const html = await $fetch('/', {
     headers: {
-      Host: 'fr.nuxt-app.localhost'
+      // Host: 'fr.nuxt-app.localhost',
+      'X-Forwarded-Host': 'fr.nuxt-app.localhost'
     }
   })
   const dom = getDom(html)
@@ -78,7 +80,8 @@ test('pass `<NuxtLink> to props', async () => {
 test('layer provides locales with domains', async () => {
   const html = await $fetch('/', {
     headers: {
-      Host: 'fr.nuxt-app.localhost'
+      // Host: 'fr.nuxt-app.localhost'
+      'X-Forwarded-Host': 'fr.nuxt-app.localhost'
     }
   })
   const dom = getDom(html)

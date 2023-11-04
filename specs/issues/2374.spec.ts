@@ -15,7 +15,8 @@ describe('#2374', async () => {
     ])('%s host', async (host, header) => {
       const html = await $fetch('/', {
         headers: {
-          Host: host
+          // Host: host
+          'X-Forwarded-Host': host
         }
       })
       const dom = getDom(html)
