@@ -1,6 +1,6 @@
 import { test, expect, describe } from 'vitest'
 import { fileURLToPath } from 'node:url'
-import { setup, $fetch } from '../utils'
+import { setup, $fetch, undiciRequest } from '../utils'
 import { getDom } from '../helper'
 
 describe('#2374', async () => {
@@ -13,13 +13,12 @@ describe('#2374', async () => {
       ['en.nuxt-app.localhost', 'test issue 2374'],
       ['zh.nuxt-app.localhost', '测试问题2374']
     ])('%s host', async (host, header) => {
-      const html = await $fetch('/', {
+      const html = await undiciRequest('/', {
         headers: {
-          // Host: host
-          'X-Forwarded-Host': host
+          host: host
         }
       })
-      const dom = getDom(html)
+      const dom = getDom(await html.body.text())
       expect(dom.querySelector('#content').textContent).toEqual(header)
     })
   })

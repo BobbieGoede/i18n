@@ -1,6 +1,6 @@
 import { test, expect } from 'vitest'
 import { fileURLToPath } from 'node:url'
-import { setup, $fetch } from './utils'
+import { setup, undiciRequest } from './utils'
 import { getDom } from './helper'
 
 await setup({
@@ -45,12 +45,12 @@ await setup({
 })
 
 test('pass `<NuxtLink> to props using domains from runtimeConfig', async () => {
-  const html = await $fetch('/', {
+  const html = await undiciRequest('/', {
     headers: {
       Host: 'fr.nuxt-app.localhost'
     }
   })
-  const dom = getDom(html)
+  const dom = getDom(await html.body.text())
   expect(dom.querySelector('#switch-locale-path-usages .switch-to-en a').getAttribute('href')).toEqual(
     `http://en.staging.nuxt-app.localhost`
   )
