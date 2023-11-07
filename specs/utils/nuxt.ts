@@ -67,6 +67,8 @@ export async function loadFixture(testContext: VitestContext) {
       buildDir,
       // NOTE: the following code is added for prerender
       _generate: ctx.options.prerender,
+      experimental: { treeshakeClientOnly: false },
+      vite: { build: { reportCompressedSize: false } },
       nitro: {
         output: {
           dir: outputDir
