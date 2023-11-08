@@ -204,7 +204,7 @@ export function detectLocale<Context extends NuxtApp = NuxtApp>(
   detectLocaleContext: DetectLocaleContext,
   normalizedLocales: LocaleObject[],
   localeCodes: string[] = []
-) {
+): [string, string] {
   const { strategy, defaultLocale, differentDomains } = nuxtI18nOptions
 
   const initialLocale = isFunction(initialLocaleLoader) ? initialLocaleLoader() : initialLocaleLoader
@@ -227,14 +227,14 @@ export function detectLocale<Context extends NuxtApp = NuxtApp>(
     )
 
   if (reason === 'detect_ignore_on_ssg') {
-    return initialLocale
+    return [initialLocale, 'detect_ignore']
   }
 
   /**
    * respect the locale detected by `detectBrowserLanguage`
    */
   if ((from === 'navigator_or_header' || from === 'cookie' || from === 'fallback') && browserLocale) {
-    return browserLocale
+    return [browserLocale, 'detect_browser']
   }
 
   let finalLocale: string = browserLocale
@@ -243,11 +243,20 @@ export function detectLocale<Context extends NuxtApp = NuxtApp>(
   if (!finalLocale) {
     if (differentDomains) {
       finalLocale = getLocaleDomain(normalizedLocales)
+      if (finalLocale) {
+        return [finalLocale, 'detect_domain']
+      }
     } else if (strategy !== 'no_prefix') {
       finalLocale = routeLocaleGetter(route)
+      if (finalLocale) {
+        return [finalLocale, 'detect_route']
+      }
     } else {
       if (!nuxtI18nOptions.detectBrowserLanguage) {
         finalLocale = initialLocale
+        if (finalLocale) {
+          return [finalLocale, 'no_detect']
+        }
       }
     }
   }
@@ -260,15 +269,21 @@ export function detectLocale<Context extends NuxtApp = NuxtApp>(
     )
   if (!finalLocale && nuxtI18nOptions.detectBrowserLanguage && nuxtI18nOptions.detectBrowserLanguage.useCookie) {
     finalLocale = getLocaleCookie(context, { ...nuxtI18nOptions.detectBrowserLanguage, localeCodes }) || ''
+    if (finalLocale) {
+      return [finalLocale, 'detect_cookie']
+    }
   }
 
   __DEBUG__ && console.log('detectLocale: finalLocale last (finalLocale, defaultLocale) -', finalLocale, defaultLocale)
   if (!finalLocale) {
     finalLocale = defaultLocale || ''
+    if (finalLocale) {
+      return [finalLocale, 'default']
+    }
   }
 
   __DEBUG__ && console.log('detectLocale: finalLocale -', finalLocale)
-  return finalLocale
+  return [finalLocale, 'last']
 }
 
 export function detectRedirect<Context extends NuxtApp = NuxtApp>({

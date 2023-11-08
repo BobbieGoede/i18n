@@ -13,7 +13,14 @@ import {
   getLocale,
   getComposer
 } from 'vue-i18n-routing'
-import { defineNuxtPlugin, useRouter, useRoute, addRouteMiddleware, defineNuxtRouteMiddleware } from '#imports'
+import {
+  defineNuxtPlugin,
+  useRouter,
+  useRoute,
+  addRouteMiddleware,
+  defineNuxtRouteMiddleware,
+  abortNavigation
+} from '#imports'
 import {
   localeCodes,
   resolveNuxtI18nOptions,
@@ -105,7 +112,8 @@ export default defineNuxtPlugin({
     const getDefaultLocale = (defaultLocale: string) => defaultLocale || vueI18nOptions.locale || 'en-US'
 
     // detect initial locale
-    let initialLocale = detectLocale(
+    // eslint-disable-next-line prefer-const
+    let [initialLocale, initialDetectReason] = detectLocale(
       route,
       nuxt.ssrContext,
       getLocaleFromRoute,
@@ -115,7 +123,7 @@ export default defineNuxtPlugin({
       normalizedLocales,
       localeCodes
     )
-    __DEBUG__ && console.log('first detect initial locale', initialLocale)
+    __DEBUG__ && console.log('first detect initial (locale, reason)', initialLocale, initialDetectReason)
 
     // load initial vue-i18n locale messages
     vueI18nOptions.messages = await loadInitialMessages(nuxtContext, vueI18nOptions.messages, {
@@ -437,7 +445,7 @@ export default defineNuxtPlugin({
       defineNuxtRouteMiddleware(async (to, from) => {
         __DEBUG__ && console.log('locale-changing middleware', to, from)
 
-        const locale = detectLocale(
+        const [locale, detectReason] = detectLocale(
           to,
           nuxt.ssrContext,
           getLocaleFromRoute,
@@ -453,7 +461,7 @@ export default defineNuxtPlugin({
           normalizedLocales,
           localeCodes
         )
-        __DEBUG__ && console.log('detect locale', locale)
+        __DEBUG__ && console.log('detect (locale, reason)', locale, detectReason)
 
         const localeSetup = isInitialLocaleSetup(locale)
         __DEBUG__ && console.log('localeSetup', localeSetup)
@@ -481,6 +489,10 @@ export default defineNuxtPlugin({
         __DEBUG__ && console.log('redirectPath on locale-changing middleware', redirectPath)
 
         routeChangeCount++
+
+        if (nuxtI18nOptions.strategy === 'prefix' && ['last', 'default'].includes(detectReason)) {
+          return abortNavigation({ statusCode: 404 })
+        }
 
         return navigate(
           {
