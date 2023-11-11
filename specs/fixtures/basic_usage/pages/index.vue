@@ -2,7 +2,7 @@
 import { navigateTo, useHead } from '#imports'
 import LangSwitcher from '../components/LangSwitcher.vue'
 
-const { t, locale, locales } = useI18n()
+const { t, tm, rt, locale, locales } = useI18n()
 const localePath = useLocalePath()
 const switchLocalePath = useSwitchLocalePath()
 const localeRoute = useLocaleRoute()
@@ -29,6 +29,11 @@ const { data, refresh } = useAsyncData('home', () =>
     aboutTranslation: t('about')
   })
 )
+
+const fruitTm = tm('fruits')
+
+console.log('fruits via tm', fruitTm, typeof fruitTm, Array.isArray(fruitTm), Array.isArray(fruitTm) ? fruitTm : [])
+const fruits = Array.isArray(fruitTm) ? fruitTm : []
 
 const i18nHead = useLocaleHead({ addSeoAttributes: { canonicalQueries: ['page'] } })
 useHead({
@@ -171,6 +176,12 @@ useHead({
     </section>
     <section>
       <div id="fallback-key">{{ $t('fallbackMessage') }}</div>
+    </section>
+    <section id="fruit-items">
+      <h3>Items in `fruits`</h3>
+      <ul>
+        <li class="fruit" v-for="(fr, index) in fruits">{{ 'name' in fr ? fr.name : 'none' }}</li>
+      </ul>
     </section>
   </div>
 </template>

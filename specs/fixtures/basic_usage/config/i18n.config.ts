@@ -10,7 +10,8 @@ export default defineI18nConfig(() => ({
       snakeCaseText: "@.snakeCase:{'aboutSite'}",
       pascalCaseText: "@.pascalCase:{'aboutSite'}",
       hello: 'Bonjour le monde!',
-      modifier: "@.snakeCase:{'hello'}"
+      modifier: "@.snakeCase:{'hello'}",
+      fruits: [{ name: 'pomme' }, { name: 'banane' }, { name: 'fraise' }]
     },
     en: {
       welcome: 'Welcome',
@@ -18,12 +19,14 @@ export default defineI18nConfig(() => ({
       profile: 'Profile',
       hello: 'Hello world!',
       modifier: "@.snakeCase:{'hello'}",
-      fallbackMessage: 'This is the fallback message!'
+      fallbackMessage: 'This is the fallback message!',
+      fruits: [{ name: 'apple' }, { name: 'banana' }, { name: 'strawberry' }]
     },
     nl: {
       aboutSite: 'Over deze site',
       snakeCaseText: "@.snakeCase:{'aboutSite'}",
-      pascalCaseText: "@.pascalCase:{'aboutSite'}"
+      pascalCaseText: "@.pascalCase:{'aboutSite'}",
+      fruits: [{ name: 'appel' }, { name: 'banaan' }, { name: 'aardbei' }]
     }
   },
   modifiers: {

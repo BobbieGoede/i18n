@@ -1,4 +1,6 @@
 // @ts-nocheck
+import { defu } from 'defu'
+
 <% options.importStrings.forEach(function (importer) { %>
 <%= importer %><% }); %>
 
@@ -19,35 +21,10 @@ export const resolveNuxtI18nOptions = async (context) => {
     if (typeof config === 'function') return await config()
     return {}
   }
-
-  const deepCopy = (src, des, predicate) => {
-    for (const key in src) {
-      if (typeof src[key] === 'object') {
-        if (!(typeof des[key] === 'object')) des[key] = {}
-        deepCopy(src[key], des[key], predicate)
-      } else {
-        if (predicate) {
-          if (predicate(src[key], des[key])) {
-            des[key] = src[key]
-          }
-        } else {
-          des[key] = src[key]
-        }
-      }
-    }
-  }
-  
+    
   const mergeVueI18nConfigs = async (loader) => {
     const layerConfig = await vueI18nConfigLoader(loader)
-    const cfg = layerConfig || {}
-    
-    for (const [k, v] of Object.entries(cfg)) {
-      if(nuxtI18nOptions.vueI18n?.[k] === undefined || typeof nuxtI18nOptions.vueI18n?.[k] !== 'object') {
-        nuxtI18nOptions.vueI18n[k] = v
-      } else {
-        deepCopy(v, nuxtI18nOptions.vueI18n[k])
-      }
-    }
+    nuxtI18nOptions.vueI18n = defu(nuxtI18nOptions.vueI18n, layerConfig || {})
   }
 
   nuxtI18nOptions.vueI18n = { messages: {} }

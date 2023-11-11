@@ -117,6 +117,24 @@ test('load option successfully', async () => {
   expect(await getText(page, '#home-header')).toEqual('Hello-world!')
 })
 
+test('vueI18n options array messages are merged correctly', async () => {
+  const { page } = await renderPage('/')
+
+  expect(await page.locator('#fruit-items li').allInnerTexts()).toEqual(['apple', 'banana', 'strawberry'])
+
+  // click `fr` lang switch link
+  await page.locator('#switch-locale-path-usages .switch-to-fr a').click()
+  await waitForURL(page, '/fr')
+
+  expect(await page.locator('#fruit-items li').allInnerTexts()).toEqual(['pomme', 'banane', 'fraise'])
+
+  // click `nl` lang switch link
+  await page.locator('#switch-locale-path-usages .switch-to-nl a').click()
+  await waitForURL(page, '/nl')
+
+  expect(await page.locator('#fruit-items li').allInnerTexts()).toEqual(['appel', 'banaan', 'aardbei'])
+})
+
 test('(#1740) should be loaded vue-i18n related modules', async () => {
   const { page } = await renderPage('/')
 
