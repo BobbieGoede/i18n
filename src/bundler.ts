@@ -6,7 +6,7 @@ import VueI18nVitePlugin from '@intlify/unplugin-vue-i18n/vite'
 import { TransformMacroPlugin } from './transform/macros'
 import { ResourcePlugin } from './transform/resource'
 import { assign } from '@intlify/shared'
-import { getLayerLangPaths } from './layers'
+import { getLayerLangPaths } from './utils'
 
 import type { Nuxt } from '@nuxt/schema'
 import type { PluginOptions } from '@intlify/unplugin-vue-i18n'

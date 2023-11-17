@@ -1,5 +1,12 @@
 import createDebug from 'debug'
-import { getLayerI18n, getProjectPath, mergeConfigLocales, resolveVueI18nConfigInfo, formatMessage } from './utils'
+import {
+  getLayerI18n,
+  getProjectPath,
+  mergeConfigLocales,
+  resolveVueI18nConfigInfo,
+  formatMessage,
+  getLocaleFiles
+} from './utils'
 
 import { useLogger } from '@nuxt/kit'
 import { isAbsolute, resolve } from 'pathe'
@@ -9,6 +16,7 @@ import { NUXT_I18N_MODULE_ID } from './constants'
 import type { LocaleConfig } from './utils'
 import type { Nuxt, NuxtConfigLayer } from '@nuxt/schema'
 import type { NuxtI18nOptions, VueI18nConfigPathInfo } from './types'
+import type { LocaleObject } from 'vue-i18n-routing'
 
 const debug = createDebug('@nuxtjs/i18n:layers')
 
@@ -77,9 +85,6 @@ export const mergeLayerPages = (analyzer: (pathOverride: string) => void, nuxt: 
   const project = nuxt.options._layers[0]
   const layers = nuxt.options._layers
 
-  // No layers to merge
-  if (layers.length === 1) return
-
   for (const l of layers) {
     const lPath = resolve(project.config.rootDir, l.config.rootDir, l.config.dir?.pages ?? 'pages')
     debug('mergeLayerPages: path ->', lPath)
@@ -111,19 +116,36 @@ export const mergeLayerLocales = (options: NuxtI18nOptions, nuxt: Nuxt) => {
 }
 
 /**
- * Returns an array of absolute paths to each layers `langDir`
+ * Merges project layer locales with registered i18n modules
  */
-export const getLayerLangPaths = (nuxt: Nuxt) => {
-  return nuxt.options._layers
-    .filter(layer => {
-      const i18n = getLayerI18n(layer)
-      return i18n?.langDir != null
-    })
-    .map(layer => {
-      const i18n = getLayerI18n(layer)
-      // @ts-ignore
-      return resolve(layer.config.srcDir, i18n.langDir)
-    }) as string[]
+export const mergeI18nModules = async (options: NuxtI18nOptions, nuxt: Nuxt) => {
+  if (options) options.i18nModules = []
+
+  const registerI18nModule = (config: Pick<NuxtI18nOptions, 'langDir' | 'locales'>) => {
+    if (config.langDir == null) return
+    options?.i18nModules?.push(config)
+  }
+
+  await nuxt.callHook('i18n:registerModule', registerI18nModule)
+  const modules = options?.i18nModules ?? []
+  const projectLangDir = getProjectPath(nuxt, nuxt.options.rootDir)
+
+  if (modules.length > 0) {
+    const baseLocales: LocaleObject[] = []
+    const layerLocales = options.locales ?? []
+
+    for (const locale of layerLocales) {
+      if (typeof locale !== 'object') continue
+      baseLocales.push({ ...locale, file: undefined, files: getLocaleFiles(locale) })
+    }
+
+    const mergedLocales = mergeConfigLocales(
+      modules.map(x => ({ ...x, projectLangDir })),
+      baseLocales
+    )
+
+    options.locales = mergedLocales
+  }
 }
 
 export async function resolveLayerVueI18nConfigInfo(nuxt: Nuxt, buildDir: string) {

@@ -1,10 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import createDebug from 'debug'
 import { EXECUTABLE_EXTENSIONS } from './constants'
 import { genImport, genDynamicImport } from 'knitwork'
 import { withQuery } from 'ufo'
-import { getLocalePaths, toCode } from './utils'
+import { getLocalePaths } from './utils'
 
 import type { Nuxt } from '@nuxt/schema'
 import type { PrerenderTarget } from './utils'
@@ -69,9 +67,9 @@ export function generateLoaderOptions(nuxt: Nuxt, { nuxtI18nOptions, vueI18nConf
     }
 
     importMapper.set(meta.key, {
-      key: toCode(importer?.key),
-      load: importer?.load,
-      cache: toCode(importer?.cache)
+      key: JSON.stringify(importer.key),
+      load: importer.load,
+      cache: JSON.stringify(importer.cache)
     })
   }
 
@@ -131,5 +129,3 @@ function genImportSpecifier(
 
   return loadPath
 }
-
-/* eslint-enable @typescript-eslint/no-explicit-any */

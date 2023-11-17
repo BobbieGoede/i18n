@@ -30,13 +30,12 @@ import {
   formatMessage,
   getNormalizedLocales,
   resolveLocales,
-  mergeI18nModules,
   applyOptionOverrides,
   getLocaleFiles,
   filterLocales
 } from './utils'
 import { distDir, runtimeDir } from './dirs'
-import { applyLayerOptions, checkLayerOptions, resolveLayerVueI18nConfigInfo } from './layers'
+import { applyLayerOptions, checkLayerOptions, mergeI18nModules, resolveLayerVueI18nConfigInfo } from './layers'
 
 import type { HookResult } from '@nuxt/schema'
 import type { NuxtI18nOptions } from './types'

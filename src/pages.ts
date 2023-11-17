@@ -1,10 +1,10 @@
 import createDebug from 'debug'
+import MagicString from 'magic-string'
 import { extendPages } from '@nuxt/kit'
 import { localizeRoutes, DefaultLocalizeRoutesPrefixable } from 'vue-i18n-routing'
 import { isString } from '@intlify/shared'
 import { parse as parseSFC, compileScript } from '@vue/compiler-sfc'
 import { walk } from 'estree-walker'
-import MagicString from 'magic-string'
 import { formatMessage, getRoutePath, parseSegment, readFileSync } from './utils'
 import { mergeLayerPages } from './layers'
 import { resolve, parse as parsePath } from 'pathe'
@@ -56,10 +56,11 @@ export function setupPages(
   const pagesDir = nuxt.options.dir && nuxt.options.dir.pages ? nuxt.options.dir.pages : 'pages'
   const srcDir = nuxt.options.srcDir
   const { trailingSlash } = additionalOptions
-  debug(`pagesDir: ${pagesDir}, srcDir: ${srcDir}, tailingSlash: ${trailingSlash}`)
+  debug(`pagesDir: ${pagesDir}, srcDir: ${srcDir}, trailingSlash: ${trailingSlash}`)
 
   extendPages(pages => {
     debug('pages making ...', pages)
+
     const ctx: NuxtPageAnalyzeContext = {
       stack: [],
       srcDir,
@@ -67,7 +68,6 @@ export function setupPages(
       pages: new Map<NuxtPage, AnalyzedNuxtPageMeta>()
     }
 
-    analyzeNuxtPages(ctx, pages)
     const analyzer = (pageDirOverride: string) => analyzeNuxtPages(ctx, pages, pageDirOverride)
     mergeLayerPages(analyzer, nuxt)
 
@@ -80,6 +80,7 @@ export function setupPages(
     })
     pages.splice(0, pages.length)
     pages.unshift(...(localizedPages as NuxtPage[]))
+
     debug('... made pages', pages)
   })
 }
@@ -106,6 +107,7 @@ export function analyzeNuxtPages(ctx: NuxtPageAnalyzeContext, pages: NuxtPage[],
         }
         path += name
       }
+
       const p: AnalyzedNuxtPageMeta = {
         inRoot: ctx.stack.length === 0,
         path
@@ -114,7 +116,7 @@ export function analyzeNuxtPages(ctx: NuxtPageAnalyzeContext, pages: NuxtPage[],
 
       if (page.children && page.children.length > 0) {
         ctx.stack.push(page.path)
-        analyzeNuxtPages(ctx, page.children)
+        analyzeNuxtPages(ctx, page.children, pageDirOverride)
         ctx.stack.pop()
       }
     }
@@ -248,17 +250,16 @@ function readComponent(target: string) {
 
   try {
     const content = readFileSync(target)
-    const { descriptor } = parseSFC(content)
 
     if (!content.includes(NUXT_I18N_COMPOSABLE_DEFINE_ROUTE)) {
       return options
     }
 
+    const { descriptor } = parseSFC(content)
     const desc = compileScript(descriptor, { id: target })
-    const { scriptSetupAst, scriptAst } = desc
 
     let extract = ''
-    const genericSetupAst = scriptSetupAst || scriptAst
+    const genericSetupAst = desc.scriptSetupAst || desc.scriptAst
     if (genericSetupAst) {
       const s = new MagicString(desc.loc.source)
       genericSetupAst.forEach(ast => {
@@ -272,12 +273,14 @@ function readComponent(target: string) {
               node.callee.name === NUXT_I18N_COMPOSABLE_DEFINE_ROUTE
             ) {
               const arg = node.arguments[0]
-              if (arg.type === 'ObjectExpression') {
-                if (verifyObjectValue(arg.properties) && arg.start != null && arg.end != null) {
+              if (arg.start != null && arg.end != null) {
+                if (arg.type === 'ObjectExpression') {
+                  if (verifyObjectValue(arg.properties)) {
+                    extract = s.slice(arg.start, arg.end)
+                  }
+                } else if (arg.type === 'BooleanLiteral') {
                   extract = s.slice(arg.start, arg.end)
                 }
-              } else if (arg.type === 'BooleanLiteral' && arg.start != null && arg.end != null) {
-                extract = s.slice(arg.start, arg.end)
               }
             }
           }

@@ -6,13 +6,12 @@ import { useTestContext } from './context'
 import { relative } from 'pathe'
 
 import type { VitestContext } from './types'
-
-const normalizeWithUnderScore = (name: string) => name.replace(/-/g, '_').replace(/\./g, '_').replace(/\//g, '_')
+import { genSafeVariableName } from 'knitwork'
 
 function getTestKey(ctx: VitestContext) {
   const testPath = ctx.file?.filepath ?? ctx.filepath ?? ''
   const relativePath = relative(__dirname, testPath)
-  const testKey = normalizeWithUnderScore(relativePath)
+  const testKey = genSafeVariableName(relativePath)
 
   return testKey
 }
