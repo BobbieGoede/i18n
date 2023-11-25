@@ -213,7 +213,6 @@ export default defineNuxtPlugin({
           composer.setLocale = async (locale: string) => {
             const localeSetup = isInitialLocaleSetup(locale)
             const [modified] = await loadAndSetLocale(locale, nuxtContext, i18n, {
-              useCookie,
               differentDomains,
               initial: localeSetup,
               skipSettingLocaleOnNavigate,
@@ -252,8 +251,7 @@ export default defineNuxtPlugin({
           composer.defaultLocale = defaultLocale
           composer.getBrowserLocale = () => _getBrowserLocale(nuxtI18nInternalOptions, nuxt.ssrContext)
           composer.getLocaleCookie = () => _getLocaleCookie(nuxt.ssrContext, { ..._detectBrowserLanguage, localeCodes })
-          composer.setLocaleCookie = (locale: string) =>
-            _setLocaleCookie(locale, nuxt.ssrContext, _detectBrowserLanguage || undefined)
+          composer.setLocaleCookie = (locale: string) => _setLocaleCookie(locale)
 
           composer.onBeforeLanguageSwitch = (oldLocale, newLocale, initialSetup, context) =>
             nuxt.callHook('i18n:beforeLocaleSwitch', { oldLocale, newLocale, initialSetup, context })
@@ -472,7 +470,6 @@ export default defineNuxtPlugin({
         __DEBUG__ && console.log('localeSetup', localeSetup)
 
         const [modified] = await loadAndSetLocale(locale, nuxtContext, i18n, {
-          useCookie,
           differentDomains,
           initial: localeSetup,
           skipSettingLocaleOnNavigate,
