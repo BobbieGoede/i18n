@@ -40,7 +40,8 @@ import {
   getLocaleCookie as _getLocaleCookie,
   setLocaleCookie as _setLocaleCookie,
   detectBrowserLanguage,
-  DefaultDetectBrowserLanguageFromResult
+  DefaultDetectBrowserLanguageFromResult,
+  runtimeDetectBrowserLanguage
 } from '../internal'
 
 import type { Composer, Locale, I18nOptions } from 'vue-i18n'
@@ -70,7 +71,9 @@ export default defineNuxtPlugin({
       deepCopy(resolved, vueI18nOptions)
     }
 
-    const useCookie = nuxtI18nOptions.detectBrowserLanguage && nuxtI18nOptions.detectBrowserLanguage.useCookie
+    const _detectBrowserLanguage = runtimeDetectBrowserLanguage()
+
+    const useCookie = _detectBrowserLanguage && _detectBrowserLanguage.useCookie
     const { __normalizedLocales: normalizedLocales } = nuxtI18nInternalOptions
     const {
       defaultLocale,
@@ -166,7 +169,7 @@ export default defineNuxtPlugin({
           stat,
           reason,
           from
-        } = nuxtI18nOptions.detectBrowserLanguage
+        } = _detectBrowserLanguage
           ? detectBrowserLanguage(
               route,
               nuxtContext,
@@ -248,10 +251,9 @@ export default defineNuxtPlugin({
           composer.differentDomains = differentDomains
           composer.defaultLocale = defaultLocale
           composer.getBrowserLocale = () => _getBrowserLocale(nuxtI18nInternalOptions, nuxt.ssrContext)
-          composer.getLocaleCookie = () =>
-            _getLocaleCookie(nuxt.ssrContext, { ...nuxtI18nOptions.detectBrowserLanguage, localeCodes })
+          composer.getLocaleCookie = () => _getLocaleCookie(nuxt.ssrContext, { ..._detectBrowserLanguage, localeCodes })
           composer.setLocaleCookie = (locale: string) =>
-            _setLocaleCookie(locale, nuxt.ssrContext, nuxtI18nOptions.detectBrowserLanguage || undefined)
+            _setLocaleCookie(locale, nuxt.ssrContext, _detectBrowserLanguage || undefined)
 
           composer.onBeforeLanguageSwitch = (oldLocale, newLocale, initialSetup, context) =>
             nuxt.callHook('i18n:beforeLocaleSwitch', { oldLocale, newLocale, initialSetup, context })
