@@ -8,6 +8,19 @@ await setup({
   browser: true,
   // overrides
   nuxtConfig: {
+    // runtimeConfig: {
+    //   public: {
+    //     i18n: {
+    //       detectBrowserLanguage: {
+    //         useCookie: true,
+    //         cookieKey: 'my_custom_cookie_name',
+    //         redirectOn: 'root',
+    //         cookieCrossOrigin: true,
+    //         cookieSecure: true
+    //       }
+    //     }
+    //   }
+    // },
     i18n: {
       debug: true,
       strategy: 'no_prefix',
@@ -23,6 +36,19 @@ await setup({
 })
 
 test('detection with cookie', async () => {
+  await setRuntimeConfig({
+    public: {
+      i18n: {
+        detectBrowserLanguage: {
+          useCookie: true,
+          cookieKey: 'my_custom_cookie_name',
+          redirectOn: 'root',
+          cookieCrossOrigin: true,
+          cookieSecure: true
+        }
+      }
+    }
+  })
   const { page } = await renderPage('/', { locale: 'en' })
   const ctx = await page.context()
   // click `fr` lang switch link
@@ -46,7 +72,45 @@ test('detection with cookie', async () => {
   expect(await ctx.cookies()).toMatchObject([{ name: 'my_custom_cookie_name', value: 'en' }])
 })
 
-test.only('disable', async () => {
+// browser
+test('detection with browser', async () => {
+  await setRuntimeConfig({
+    public: {
+      i18n: {
+        detectBrowserLanguage: {
+          useCookie: false
+        }
+      }
+    }
+  })
+  const { page } = await renderPage('/', { locale: 'fr' })
+
+  // detect locale from navigator language
+  expect(await getText(page, '#lang-switcher-current-locale code')).toEqual('fr')
+
+  // click `en` lang switch link
+  await page.locator('#set-locale-link-en').click()
+  expect(await getText(page, '#lang-switcher-current-locale code')).toEqual('en')
+
+  // navigate to blog/article
+  await gotoPath(page, '/blog/article')
+
+  // locale in blog/article
+  expect(await getText(page, '#lang-switcher-current-locale code')).toEqual('fr')
+
+  // navigate with home
+  await gotoPath(page, '/')
+
+  // locale in home
+  expect(await getText(page, '#lang-switcher-current-locale code')).toEqual('fr')
+
+  // click `en` lang switch link
+  await page.locator('#set-locale-link-en').click()
+  expect(await getText(page, '#lang-switcher-current-locale code')).toEqual('en')
+})
+
+// disable
+test('disable', async () => {
   await setRuntimeConfig({
     public: {
       i18n: {
@@ -75,5 +139,22 @@ test.only('disable', async () => {
   await page.locator('#link-home').click()
 
   // set default locale
+  expect(await getText(page, '#lang-switcher-current-locale code')).toEqual('fr')
+})
+
+test('fallback', async () => {
+  await setRuntimeConfig({
+    public: {
+      i18n: {
+        detectBrowserLanguage: {
+          useCookie: false,
+          fallbackLocale: 'fr'
+        }
+      }
+    }
+  })
+  const { page } = await renderPage('/', { locale: 'ja' })
+
+  // detect fallback locale with navigator language
   expect(await getText(page, '#lang-switcher-current-locale code')).toEqual('fr')
 })
