@@ -1,6 +1,7 @@
 import createDebug from 'debug'
 import { extendPages } from '@nuxt/kit'
-import { localizeRoutes, DefaultLocalizeRoutesPrefixable } from 'vue-i18n-routing'
+import { DefaultLocalizeRoutesPrefixable } from 'vue-i18n-routing'
+import { localizeRoutes } from './resolve'
 import { isString } from '@intlify/shared'
 import { parse as parseSFC, compileScript } from '@vue/compiler-sfc'
 import { walk } from 'estree-walker'
@@ -47,10 +48,10 @@ export function setupPages(
     return !options.differentDomains && DefaultLocalizeRoutesPrefixable(opts)
   }
 
-  let includeUprefixedFallback = nuxt.options.ssr === false
+  let includeUnprefixedFallback = nuxt.options.ssr === false
   nuxt.hook('nitro:init', () => {
-    debug('enable includeUprefixedFallback')
-    includeUprefixedFallback = options.strategy !== 'prefix'
+    debug('enable includeUnprefixedFallback')
+    includeUnprefixedFallback = options.strategy !== 'prefix'
   })
 
   const pagesDir = nuxt.options.dir && nuxt.options.dir.pages ? nuxt.options.dir.pages : 'pages'
@@ -74,7 +75,7 @@ export function setupPages(
     // @ts-expect-error Nuxt allows any valid redirect object, not just strings
     const localizedPages = localizeRoutes(pages, {
       ...options,
-      includeUprefixedFallback,
+      includeUnprefixedFallback,
       localizeRoutesPrefixable,
       optionsResolver: getRouteOptionsResolver(ctx, options)
     })
