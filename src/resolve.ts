@@ -2,12 +2,11 @@ import { isString, assign } from '@intlify/shared'
 
 import type {
   Strategies,
-  I18nRoute,
   I18nRoutingOptions,
   ComputedRouteOptions,
-  RouteOptionsResolver,
   LocalizeRoutesPrefixableOptions
 } from 'vue-i18n-routing'
+import type { NuxtPage } from '@nuxt/schema'
 
 /** @internal */
 export const STRATEGIES = {
@@ -31,6 +30,14 @@ export const VUE_I18N_ROUTING_DEFAULTS = {
   defaultLocaleRouteNameSuffix: 'default'
 }
 */
+// Language: typescript
+export function adjustRoutePathForTrailingSlash(
+  pagePath: string,
+  trailingSlash: boolean,
+  isChildWithRelativePath: boolean
+) {
+  return pagePath.replace(/\/+$/, '') + (trailingSlash ? '/' : '') || (isChildWithRelativePath ? '' : '/')
+}
 
 /** @internal */
 export const DEFAULT_LOCALE = ''
@@ -64,7 +71,7 @@ function prefixable(optons: LocalizeRoutesPrefixableOptions): boolean {
 }
 
 export const DefaultLocalizeRoutesPrefixable = prefixable
-
+export declare type RouteOptionsResolver = (route: NuxtPage, localeCodes: string[]) => ComputedRouteOptions | null
 /**
  * Localize routes
  *
@@ -76,10 +83,11 @@ export const DefaultLocalizeRoutesPrefixable = prefixable
  * @public
  */
 export function localizeRoutes(
-  routes: I18nRoute[],
+  routes: NuxtPage[],
   {
     defaultLocale = DEFAULT_LOCALE,
     strategy = DEFAULT_STRATEGY as Strategies,
+    trailingSlash = DEFAULT_TRAILING_SLASH,
     routesNameSeparator = DEFAULT_ROUTES_NAME_SEPARATOR,
     defaultLocaleRouteNameSuffix = DEFAULT_LOCALE_ROUTE_NAME_SUFFIX,
     includeUnprefixedFallback = false,
@@ -99,21 +107,22 @@ export function localizeRoutes(
     includeUnprefixedFallback?: boolean
     optionsResolver?: RouteOptionsResolver
   } = {}
-): I18nRoute[] {
+): NuxtPage[] {
   if (strategy === 'no_prefix') {
     return routes
   }
 
   // normalize localeCodes
-  const _localeCodes = locales.map(locale => (isString(locale) ? locale : locale.code))
+  const normalizedLocaleCodes = locales.map(locale => (isString(locale) ? locale : locale.code))
 
   function makeLocalizedRoutes(
-    route: I18nRoute,
+    route: NuxtPage,
     allowedLocaleCodes: string[],
-    isChild = false,
+    parent: NuxtPage | undefined = undefined,
     isExtraPageTree = false
-  ): I18nRoute[] {
+  ): NuxtPage[] {
     // skip route localization
+    // @ts-expect-error component doesn't exist on pages?
     if (route.redirect && (!route.component || !route.file)) {
       return [route]
     }
@@ -122,6 +131,7 @@ export function localizeRoutes(
     let routeOptions: ComputedRouteOptions | null = null
     if (optionsResolver != null) {
       routeOptions = optionsResolver(route, allowedLocaleCodes)
+
       if (routeOptions == null) {
         return [route]
       }
@@ -129,9 +139,10 @@ export function localizeRoutes(
 
     // component specific options
     const componentOptions: ComputedRouteOptions = {
-      locales: _localeCodes,
+      locales: normalizedLocaleCodes,
       paths: {}
     }
+
     if (routeOptions != null) {
       assign(componentOptions, routeOptions)
     }
@@ -139,22 +150,11 @@ export function localizeRoutes(
 
     // double check locales to remove any locales not found in pageOptions.
     // this is there to prevent children routes being localized even though they are disabled in the configuration.
-    if (
-      componentOptions.locales.length > 0 &&
-      routeOptions &&
-      routeOptions.locales != null &&
-      routeOptions.locales.length > 0
-    ) {
-      const filteredLocales = []
-      for (const locale of componentOptions.locales) {
-        if (routeOptions.locales.includes(locale)) {
-          filteredLocales.push(locale)
-        }
-      }
-      componentOptions.locales = filteredLocales
+    if (componentOptions.locales.length > 0 && (routeOptions?.locales?.length ?? 0) > 0) {
+      componentOptions.locales = componentOptions.locales.filter(locale => routeOptions?.locales.includes(locale))
     }
 
-    const localized: I18nRoute[] = []
+    const localized: NuxtPage[] = []
     for (const locale of componentOptions.locales) {
       const { name } = route
       let { path } = route
@@ -165,19 +165,19 @@ export function localizeRoutes(
         localizedRoute.name = `${name}${routesNameSeparator}${locale}`
       }
 
-      // generate localized children routes
-      if (route.children) {
-        const routeChildren = [] as NonNullable<I18nRoute['children']>
-        for (const child of route.children ?? []) {
-          // @ts-ignore
-          routeChildren.push(...makeLocalizedRoutes(child, [locale], true, isExtraPageTree))
-        }
-        localizedRoute.children = routeChildren
-      }
-
       // get custom path if any
       if (componentOptions.paths && componentOptions.paths[locale]) {
         path = componentOptions.paths[locale]
+      }
+
+      /**
+       * Generate localized children routes
+       * Pass custom localized path
+       */
+      if (route.children) {
+        localizedRoute.children = route.children.flatMap(child =>
+          makeLocalizedRoutes(child, [locale], { ...localizedRoute, path }, isExtraPageTree)
+        )
       }
 
       // For 'prefix_and_default' strategy and default locale:
@@ -185,44 +185,58 @@ export function localizeRoutes(
       // - if it's a child page of that extra parent page, append default suffix to it
       const isDefaultLocale = locale === defaultLocale
       if (isDefaultLocale && strategy === 'prefix_and_default') {
-        if (isChild) {
-          if (isExtraPageTree && name) {
-            localizedRoute.name += `${routesNameSeparator}${defaultLocaleRouteNameSuffix}`
+        if (parent == null) {
+          const defaultRoute = { ...localizedRoute, path }
+
+          if (name) {
+            defaultRoute.name = `${localizedRoute.name}${routesNameSeparator}${defaultLocaleRouteNameSuffix}`
           }
 
-          continue
-        }
-
-        const defaultRoute = { ...localizedRoute, path }
-
-        if (name) {
-          defaultRoute.name = `${localizedRoute.name}${routesNameSeparator}${defaultLocaleRouteNameSuffix}`
-        }
-
-        if (route.children) {
-          // recreate child routes with default suffix added
-          defaultRoute.children = []
-          for (const childRoute of route.children) {
-            // isExtraRouteTree argument is true to indicate that this is extra route added for 'prefix_and_default' strategy
-            defaultRoute.children = defaultRoute.children.concat(
-              makeLocalizedRoutes(childRoute as I18nRoute, [locale], true, true)
+          if (route.children) {
+            // recreate child routes with default suffix added
+            defaultRoute.children = route.children.flatMap(childRoute =>
+              // isExtraRouteTree argument is true to indicate that this is extra route added for 'prefix_and_default' strategy
+              makeLocalizedRoutes(childRoute, [locale], localizedRoute, true)
             )
           }
-        }
 
-        localized.push(defaultRoute)
+          localized.push(defaultRoute)
+        } else if (isExtraPageTree && name) {
+          localizedRoute.name += `${routesNameSeparator}${defaultLocaleRouteNameSuffix}`
+        }
       }
 
       // add route prefix
       const shouldAddPrefix = localizeRoutesPrefixable({
-        isChild,
+        isChild: parent != null,
         path,
         currentLocale: locale,
         defaultLocale,
         strategy
       })
-      if (shouldAddPrefix) {
+
+      /**
+       * Ensure parent route paths prefix '/'
+       */
+      if (shouldAddPrefix && parent == null) {
+        if (!path.startsWith('/')) {
+          path = `/${path}`
+        }
+
         path = `/${locale}${path}`
+      }
+
+      /**
+       * Remove parent route path from child route path
+       * /en/parent/child -> child
+       */
+      if (parent != null) {
+        path = path.replace(new RegExp(`^(/${locale})?${parent.path}/|^/`), '')
+      }
+
+      if (path) {
+        const isChildWithRelativePath = parent != null && !path.startsWith('/')
+        path = adjustRoutePathForTrailingSlash(path, trailingSlash, isChildWithRelativePath)
       }
 
       if (shouldAddPrefix && isDefaultLocale && strategy === 'prefix' && includeUnprefixedFallback) {
@@ -236,10 +250,5 @@ export function localizeRoutes(
     return localized
   }
 
-  const result: I18nRoute[] = []
-  for (const route of routes) {
-    result.push(...makeLocalizedRoutes(route, _localeCodes || []))
-  }
-
-  return result
+  return routes.flatMap(route => makeLocalizedRoutes(route, normalizedLocaleCodes))
 }
