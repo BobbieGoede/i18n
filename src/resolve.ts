@@ -171,6 +171,13 @@ export function localizeRoutes(
       }
 
       /**
+       * Ensure parent route paths prefix '/'
+       */
+      if (parent == null && !path.startsWith('/')) {
+        path = `/${path}`
+      }
+
+      /**
        * Generate localized children routes
        * Pass custom localized path
        */
@@ -214,13 +221,6 @@ export function localizeRoutes(
         defaultLocale,
         strategy
       })
-
-      /**
-       * Ensure parent route paths prefix '/'
-       */
-      if (parent == null && !path.startsWith('/')) {
-        path = `/${path}`
-      }
 
       if (shouldAddPrefix && parent == null) {
         path = `/${locale}${path}`
