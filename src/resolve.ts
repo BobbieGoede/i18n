@@ -218,11 +218,11 @@ export function localizeRoutes(
       /**
        * Ensure parent route paths prefix '/'
        */
-      if (shouldAddPrefix && parent == null) {
-        if (!path.startsWith('/')) {
-          path = `/${path}`
-        }
+      if (parent == null && !path.startsWith('/')) {
+        path = `/${path}`
+      }
 
+      if (shouldAddPrefix && parent == null) {
         path = `/${locale}${path}`
       }
 
@@ -250,5 +250,7 @@ export function localizeRoutes(
     return localized
   }
 
-  return routes.flatMap(route => makeLocalizedRoutes(route, normalizedLocaleCodes))
+  const localizedRoutes = routes.flatMap(route => makeLocalizedRoutes(route, normalizedLocaleCodes))
+  console.log(JSON.stringify(localizedRoutes, null, 2))
+  return localizedRoutes
 }
