@@ -222,7 +222,7 @@ export function localizeRoutes(
         strategy
       })
 
-      if (shouldAddPrefix && parent == null) {
+      if (shouldAddPrefix) {
         path = `/${locale}${path}`
       }
 
@@ -231,7 +231,8 @@ export function localizeRoutes(
        * /en/parent/child -> child
        */
       if (parent != null) {
-        path = path.replace(new RegExp(`^(/${locale})?${parent.path}/|^/`), '')
+        const parentMatcher = '(/)?' + parent.path.replace(new RegExp('^/'), '')
+        path = path.replace(new RegExp(`^(/${locale})?${parentMatcher}/|^/`), '')
       }
 
       if (path) {
