@@ -1,6 +1,7 @@
 import createDebug from 'debug'
 import { extendPages } from '@nuxt/kit'
-import { localizeRoutes, DefaultLocalizeRoutesPrefixable } from 'vue-i18n-routing'
+import { DefaultLocalizeRoutesPrefixable } from 'vue-i18n-routing'
+import { localizeRoutes } from './resolve'
 import { isString } from '@intlify/shared'
 import { parse as parseSFC, compileScript } from '@vue/compiler-sfc'
 import { walk } from 'estree-walker'
@@ -10,13 +11,9 @@ import { mergeLayerPages } from './layers'
 import { resolve, parse as parsePath } from 'pathe'
 import { NUXT_I18N_COMPOSABLE_DEFINE_ROUTE } from './constants'
 
+import type { RouteOptionsResolver } from './resolve'
 import type { Nuxt, NuxtPage } from '@nuxt/schema'
-import type {
-  I18nRoute,
-  RouteOptionsResolver,
-  ComputedRouteOptions,
-  LocalizeRoutesPrefixableOptions
-} from 'vue-i18n-routing'
+import type { ComputedRouteOptions, LocalizeRoutesPrefixableOptions } from 'vue-i18n-routing'
 import type { NuxtI18nOptions, CustomRoutePages } from './types'
 import type { Node, ObjectExpression, ArrayExpression } from '@babel/types'
 
@@ -47,10 +44,10 @@ export function setupPages(
     return !options.differentDomains && DefaultLocalizeRoutesPrefixable(opts)
   }
 
-  let includeUprefixedFallback = nuxt.options.ssr === false
+  let includeUnprefixedFallback = nuxt.options.ssr === false
   nuxt.hook('nitro:init', () => {
-    debug('enable includeUprefixedFallback')
-    includeUprefixedFallback = options.strategy !== 'prefix'
+    debug('enable includeUnprefixedFallback')
+    includeUnprefixedFallback = options.strategy !== 'prefix'
   })
 
   const pagesDir = nuxt.options.dir && nuxt.options.dir.pages ? nuxt.options.dir.pages : 'pages'
@@ -71,15 +68,14 @@ export function setupPages(
     const analyzer = (pageDirOverride: string) => analyzeNuxtPages(ctx, pages, pageDirOverride)
     mergeLayerPages(analyzer, nuxt)
 
-    // @ts-expect-error Nuxt allows any valid redirect object, not just strings
     const localizedPages = localizeRoutes(pages, {
       ...options,
-      includeUprefixedFallback,
+      includeUnprefixedFallback,
       localizeRoutesPrefixable,
       optionsResolver: getRouteOptionsResolver(ctx, options)
     })
     pages.splice(0, pages.length)
-    pages.unshift(...(localizedPages as NuxtPage[]))
+    pages.unshift(...localizedPages)
     debug('... made pages', pages)
   })
 }
@@ -140,15 +136,16 @@ export function getRouteOptionsResolver(
 }
 
 function resolveRoutePath(path: string): string {
-  const normalizePath = path.slice(1, path.length) // remove `/`
+  const normalizePath = path.replace(new RegExp(/^\//), '') // remove '/' if present
   const tokens = parseSegment(normalizePath)
   const routePath = getRoutePath(tokens)
-  return routePath
+  // preserve '/' if original path had one, otherwise leave it out
+  return path.startsWith('/') ? routePath.slice(1, routePath.length) : routePath
 }
 
 function getRouteOptionsFromPages(
   ctx: NuxtPageAnalyzeContext,
-  route: I18nRoute,
+  route: NuxtPage,
   localeCodes: string[],
   pages: CustomRoutePages,
   defaultLocale: string
@@ -203,8 +200,9 @@ function getRouteOptionsFromPages(
   return options
 }
 
-function getRouteOptionsFromComponent(route: I18nRoute, localeCodes: string[]) {
+function getRouteOptionsFromComponent(route: NuxtPage, localeCodes: string[]) {
   debug('getRouteOptionsFromComponent', route)
+  // @ts-expect-error NuxtPage has no component
   const file = route.component || route.file
 
   // localize disabled if no file (vite) or component (webpack)
