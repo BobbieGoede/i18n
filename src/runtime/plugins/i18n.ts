@@ -156,7 +156,12 @@ export default defineNuxtPlugin({
 
     let ssgModeInitialSetup = true
     const isSSGModeInitialSetup = () => isSSG && ssgModeInitialSetup
-
+    if (process.server) {
+      process?.send?.({
+        type: 'runtime-config',
+        value: { holo: 'worold' }
+      })
+    }
     /**
      * NOTE:
      *  avoid hydration mismatch for SSG mode

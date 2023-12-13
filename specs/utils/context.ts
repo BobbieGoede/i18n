@@ -15,7 +15,26 @@ export function createTestContext(options: Partial<TestOptions>): TestContext {
     logLevel: 1,
     server: true,
     build: options.browser !== false || options.server !== false,
-    nuxtConfig: {},
+    nuxtConfig: {
+      // modules: [
+      //   //
+      //   (_, nuxt) => {
+      //     console.log(process.env.NODE_ENV, process.env.NODE_ENV === 'test', 'hello?', nuxt)
+      //     nuxt.hook('', () => {
+      //       if (process.env.NODE_ENV === 'test') {
+      //         process.on('message', (msg: string) => {
+      //           const parsed = JSON.parse(msg) as { type: string; value: Record<string, unknown> }
+      //           console.log('child received:', typeof msg, msg, typeof parsed, parsed)
+      //           if (parsed?.type === 'runtime-config') {
+      //             console.log('trying to update runtimeConfig to:', defu(parsed.value, nuxt.options.runtimeConfig))
+      //             nuxt.options.runtimeConfig = defu(parsed.value, nuxt.options.runtimeConfig)
+      //           }
+      //         })
+      //       }
+      //     })
+      //   }
+      // ]
+    },
     // TODO: auto detect based on process.env
     runner: <TestRunner>'vitest',
     browserOptions: {

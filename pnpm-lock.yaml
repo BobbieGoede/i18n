@@ -212,6 +212,10 @@ importers:
         version: 3.8.2(eslint@8.50.0)(rollup@3.28.1)(typescript@5.2.2)(vite@4.5.0)
 
   specs/fixtures/basic_usage:
+    dependencies:
+      defu:
+        specifier: ^6.1.2
+        version: 6.1.3
     devDependencies:
       '@nuxtjs/i18n':
         specifier: link:../../..
@@ -2493,7 +2497,7 @@ packages:
     dependencies:
       '@nuxt/kit': 3.8.2(rollup@3.28.1)
       consola: 3.2.3
-      defu: 6.1.2
+      defu: 6.1.3
       destr: 2.0.2
       detab: 3.0.2
       json5: 2.2.3
@@ -3285,7 +3289,7 @@ packages:
     resolution: {integrity: sha512-+Jn0iN6TvRTTtTBX4qXWhtOMLL4rsyUIX3/9HM+eBAwr5/cELLw3RuI1tgp942QteTi7PvI5Av4nEi6BlLBr+A==}
     dependencies:
       '@nuxt/kit': 3.8.2(rollup@3.28.1)
-      defu: 6.1.2
+      defu: 6.1.3
       nuxt-component-meta: 0.5.1(rollup@3.28.1)(vue-component-type-helpers@1.3.12)
       nuxt-config-schema: 0.4.6(rollup@3.28.1)
       socket.io-client: 4.7.1
@@ -3313,7 +3317,7 @@ packages:
     resolution: {integrity: sha512-HGZA70ad6IgaP0bN2N3sEsBxURZfUb8HMMxQ7s/Iqw1U8snBsByAEaIxD0eafWLOvwNckHMTYzCIl+Xs6ZiXSA==}
     dependencies:
       '@nuxt/kit': 3.8.2(rollup@3.28.1)
-      defu: 6.1.2
+      defu: 6.1.3
       pathe: 1.1.1
       plausible-tracker: 0.3.8
     transitivePeerDependencies:
@@ -3408,6 +3412,7 @@ packages:
     dependencies:
       is-glob: 4.0.3
       micromatch: 4.0.5
+      napi-wasm: 1.1.0
     dev: true
     bundledDependencies:
       - napi-wasm
@@ -5368,7 +5373,7 @@ packages:
     resolution: {integrity: sha512-3IP/MuamSVRVw8W8+CHWAz9gKN4gd+voF2zm/Ln6D25C2RhytEZ1ABbC8MjKr4BR9rhoV1JQ7jJA158LDiTkLg==}
     dependencies:
       chokidar: 3.5.3
-      defu: 6.1.2
+      defu: 6.1.3
       dotenv: 16.3.1
       giget: 1.1.2
       jiti: 1.20.0
@@ -7154,7 +7159,7 @@ packages:
     hasBin: true
     dependencies:
       colorette: 2.0.20
-      defu: 6.1.2
+      defu: 6.1.3
       https-proxy-agent: 5.0.1
       mri: 1.2.0
       node-fetch-native: 1.4.0
@@ -7351,8 +7356,8 @@ packages:
       duplexer: 0.1.2
     dev: true
 
-  /h3-nightly@1.9.1-1700834537.afc4183:
-    resolution: {integrity: sha512-9i5jIioUag9gBJyY9CQBgJpxh72vHb+GsQFyUzEdPiZQpBCramb0kcS15lPT7pWeu8s7Aw7kSthH+kkB0jmXxg==}
+  /h3-nightly@1.10.0-1701948668.39f9434:
+    resolution: {integrity: sha512-ZgDOpzAr8BO/sFzWYvLZLhg3d/NRbDeff+rA6vnoog0530NPEVfO3nIzCwY3nT+Z0faROooaiCyKaAPYbo7b9A==}
     dependencies:
       cookie-es: 1.0.0
       defu: 6.1.3
@@ -9227,7 +9232,7 @@ packages:
         optional: true
     dependencies:
       citty: 0.1.4
-      defu: 6.1.2
+      defu: 6.1.3
       esbuild: 0.18.17
       fs-extra: 11.1.1
       globby: 13.2.2
@@ -9355,7 +9360,7 @@ packages:
       fs-extra: 11.2.0
       globby: 14.0.0
       gzip-size: 7.0.0
-      h3: /h3-nightly@1.9.1-1700834537.afc4183
+      h3: /h3-nightly@1.10.0-1701948668.39f9434
       hookable: 5.5.3
       httpxy: 0.1.5
       is-primitive: 3.0.1
@@ -9778,7 +9783,7 @@ packages:
     resolution: {integrity: sha512-kHLWJFynj5QrxVZ1MjY2xmDaTSN1BCMLGExA+hMMLoCb3wn9TJlDVqnE/nSdUJPMRkNn/NQ5WP9NLA9vlAXRUw==}
     dependencies:
       '@nuxt/kit': 3.8.2(rollup@3.28.1)
-      defu: 6.1.2
+      defu: 6.1.3
       jiti: 1.20.0
       pathe: 1.1.1
       untyped: 1.4.0
@@ -10522,7 +10527,7 @@ packages:
       chroma-js: 2.4.2
       consola: 3.2.3
       csstype: 3.1.2
-      defu: 6.1.2
+      defu: 6.1.3
       magic-string: 0.30.4
       nanoid: 4.0.2
       ohash: 1.1.3
@@ -12682,7 +12687,7 @@ packages:
       '@rollup/pluginutils': 5.0.4(rollup@3.28.1)
       chalk: 5.3.0
       consola: 3.2.3
-      defu: 6.1.2
+      defu: 6.1.3
       esbuild: 0.17.19
       globby: 13.2.2
       hookable: 5.5.3
@@ -12722,7 +12727,7 @@ packages:
       chalk: 5.3.0
       citty: 0.1.4
       consola: 3.2.3
-      defu: 6.1.2
+      defu: 6.1.3
       esbuild: 0.19.2
       globby: 13.2.2
       hookable: 5.5.3

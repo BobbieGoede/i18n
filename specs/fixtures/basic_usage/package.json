@@ -11,5 +11,8 @@
   "devDependencies": {
     "@nuxtjs/i18n": "latest",
     "nuxt": "latest"
+  },
+  "dependencies": {
+    "defu": "^6.1.2"
   }
 }

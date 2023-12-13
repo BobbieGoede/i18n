@@ -9,6 +9,9 @@ export default defineNuxtConfig({
     typedPages: true
   },
   extends: ['layers/i18n-layer'],
+  hooks: {
+    'app:created'() {}
+  },
   modules: [
     (_, nuxt) => {
       console.log(nuxt.options._installedModules)

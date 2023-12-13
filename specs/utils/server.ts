@@ -8,6 +8,7 @@ import * as _kit from '@nuxt/kit'
 import { resolve } from 'pathe'
 import { useTestContext } from './context'
 import { request } from 'undici'
+import { execaNode } from 'execa'
 
 // @ts-expect-error type cast
 // eslint-disable-next-line
@@ -33,6 +34,11 @@ export async function startServer(env: Record<string, unknown> = {}) {
         ...env
       }
     })
+    console.log(ctx.serverProcess)
+    ctx.serverProcess?.send({ msg: 'hello' })
+    ctx.serverProcess!.on('message', val => {
+      console.log('parent received:', val)
+    })
     await waitForPort(port, { retries: 32, host }).catch(() => {})
     let lastError
     for (let i = 0; i < 150; i++) {
@@ -40,6 +46,7 @@ export async function startServer(env: Record<string, unknown> = {}) {
       try {
         const res = await $fetch(ctx.nuxt!.options.app.baseURL)
         if (!res.includes('__NUXT_LOADING__')) {
+          ctx.serverProcess?.send({ msg: 'hello2' })
           return
         }
       } catch (e) {
@@ -58,12 +65,17 @@ export async function startServer(env: Record<string, unknown> = {}) {
       }
       // stdio: 'inherit'
     })
+    ctx.serverProcess?.send({ msg: 'hello' })
+    ctx.serverProcess!.on('message', val => {
+      console.log('parent received:', val)
+    })
     await waitForPort(port, { retries: 32 })
     for (let i = 0; i < 50; i++) {
       await new Promise(resolve => setTimeout(resolve, 100))
       try {
         const res = await $fetch(ctx.nuxt!.options.app.baseURL)
         if (!res.includes('__NUXT_LOADING__')) {
+          ctx.serverProcess?.send({ msg: 'hello2' })
           return
         }
       } catch {}
@@ -71,7 +83,7 @@ export async function startServer(env: Record<string, unknown> = {}) {
     ctx.serverProcess.kill()
     throw new Error('Timeout waiting for ssg preview!')
   } else {
-    ctx.serverProcess = execa('node', [resolve(ctx.nuxt!.options.nitro.output!.dir!, 'server/index.mjs')], {
+    ctx.serverProcess = execaNode(resolve(ctx.nuxt!.options.nitro.output!.dir!, 'server/index.mjs'), {
       stdio: 'inherit',
       env: {
         ...process.env,
@@ -81,6 +93,7 @@ export async function startServer(env: Record<string, unknown> = {}) {
         ...env
       }
     })
+
     await waitForPort(port, { retries: 20, host })
   }
 }

@@ -83,12 +83,13 @@ test('register module hook', async () => {
   expect(await getText(page, '#register-module')).toEqual('This is a merged module layer locale key in French')
 })
 
-test('vueI18n config file can access runtimeConfig', async () => {
-  const { page } = await renderPage('/')
+test.only('vueI18n config file can access runtimeConfig', async () => {
+  const { page, consoleLogs } = await renderPage('/')
 
   expect(await getText(page, '#runtime-config')).toEqual('Hello from runtime config!')
 
   await setRuntimeConfig({ public: { runtimeValue: 'The environment variable has changed!' } })
+  console.log(consoleLogs)
 
   await gotoPath(page, '/')
   expect(await getText(page, '#runtime-config')).toEqual('The environment variable has changed!')

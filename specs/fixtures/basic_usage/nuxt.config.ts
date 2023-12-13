@@ -11,7 +11,7 @@ export default defineNuxtConfig({
     `../layers/layer-vueI18n-options/layer-simple`,
     `../layers/layer-vueI18n-options/layer-simple-secondary`
   ],
-  plugins: [`../plugins/i18nHooks.ts`],
+  plugins: [`../plugins/i18nHooks.ts`, './plugins/message-plugin.ts'],
 
   i18n: {
     vueI18n: './config/i18n.config.ts',

@@ -3,7 +3,7 @@
 import { JSDOM } from 'jsdom'
 import { parse as babelParse } from '@babel/parser'
 import { expect } from 'vitest'
-import { getBrowser, startServer, url, useTestContext } from './utils'
+import { getBrowser, url, useTestContext } from './utils'
 import { snakeCase } from 'scule'
 
 import { errors, type BrowserContextOptions, type Page } from 'playwright'
@@ -215,5 +215,10 @@ export function convertObjectToConfig(obj: Record<string, unknown>) {
 export async function setRuntimeConfig(env: Record<string, unknown>) {
   const converted = convertObjectToConfig(env)
   console.log(converted)
-  await startServer(converted)
+  const ctx = useTestContext()
+  // await startServer(converted)
+  ctx.serverProcess?.send({ type: 'runtime-config', value: converted })
+  // for (let i = 0; i < 10; i++) {
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  // }
 }
