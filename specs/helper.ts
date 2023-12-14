@@ -217,8 +217,21 @@ export async function setRuntimeConfig(env: Record<string, unknown>) {
   console.log(converted)
   const ctx = useTestContext()
   // await startServer(converted)
-  ctx.serverProcess?.send({ type: 'runtime-config', value: converted })
-  // for (let i = 0; i < 10; i++) {
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  // }
+  let updatedConfig = false
+  ctx.serverProcess?.on('message', (msg: { type: string }) => {
+    console.log(msg)
+    if (msg.type === 'runtime-config-update') {
+      updatedConfig = true
+    }
+  })
+
+  ctx.serverProcess?.send({ type: 'runtime-config', value: converted, raw: env })
+
+  for (let i = 0; i < 10; i++) {
+    if (updatedConfig) {
+      console.log('runtime config update received!')
+      break
+    }
+    await new Promise(resolve => setTimeout(resolve, 1000))
+  }
 }

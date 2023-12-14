@@ -85,10 +85,11 @@ test('register module hook', async () => {
 
 test.only('vueI18n config file can access runtimeConfig', async () => {
   const { page, consoleLogs } = await renderPage('/')
-
+  console.log(consoleLogs)
   expect(await getText(page, '#runtime-config')).toEqual('Hello from runtime config!')
 
   await setRuntimeConfig({ public: { runtimeValue: 'The environment variable has changed!' } })
+  await page.reload()
   console.log(consoleLogs)
 
   await gotoPath(page, '/')
