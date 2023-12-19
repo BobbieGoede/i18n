@@ -149,6 +149,20 @@ describe('localizeRoutes', function () {
         {
           path: '/about',
           name: 'about'
+        },
+        {
+          path: '/user/:id',
+          name: 'user',
+          children: [
+            {
+              path: 'profile',
+              name: 'user-profile'
+            },
+            {
+              path: 'posts',
+              name: 'user-posts'
+            }
+          ]
         }
       ]
 
@@ -237,7 +251,7 @@ describe('localizeRoutes', function () {
     })
   })
 
-  describe('Route optiosn resolver: routing disable', () => {
+  describe('Route options resolver: routing disable', () => {
     it('should be disabled routing', () => {
       const routes: NuxtPage[] = [
         {
@@ -253,7 +267,7 @@ describe('localizeRoutes', function () {
       const localizedRoutes = localizeRoutes(routes, {
         ...nuxtOptions,
         locales: localeCodes,
-        optionsResolver: () => null
+        optionsResolver: () => undefined
       })
 
       expect(localizedRoutes).toMatchSnapshot()

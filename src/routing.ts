@@ -32,7 +32,7 @@ export declare type RouteOptionsResolver = (route: NuxtPage, localeCodes: string
  *
  * @public
  */
-export interface LocalizeRoutesPrefixableOptions {
+export interface PrefixLocalizedRouteOptions {
   /**
    * Current locale
    */
@@ -50,15 +50,17 @@ export interface LocalizeRoutesPrefixableOptions {
    */
   path: string
 }
-function localizeRoutesPrefixable(
-  localizeOptions: LocalizeRoutesPrefixableOptions,
-  options: LocalizeRoutesParams
+function prefixLocalizedRoute(
+  localizeOptions: PrefixLocalizedRouteOptions,
+  options: LocalizeRoutesParams,
+  extra = false
 ): boolean {
   const isDefaultLocale = localizeOptions.locale === (options.defaultLocale ?? '')
   const isChildWithRelativePath = localizeOptions.parent != null && !localizeOptions.path.startsWith('/')
 
   // no need to add prefix if child's path is relative
   return (
+    !extra &&
     !options.differentDomains &&
     !isChildWithRelativePath &&
     // skip default locale if strategy is 'prefix_except_default'
@@ -66,9 +68,9 @@ function localizeRoutesPrefixable(
   )
 }
 
-function adjustRoutePathForTrailingSlash(pagePath: string, trailingSlash: boolean, parent?: NuxtPage) {
-  const isChildWithRelativePath = parent != null && !pagePath.startsWith('/')
-  return pagePath.replace(/\/+$/, '') + (trailingSlash ? '/' : '') || (isChildWithRelativePath ? '' : '/')
+function adjustRoutePathForTrailingSlash(localized: LocalizedRoute, trailingSlash: boolean) {
+  const isChildWithRelativePath = localized.parent != null && !localized.path.startsWith('/')
+  return localized.path.replace(/\/+$/, '') + (trailingSlash ? '/' : '') || (isChildWithRelativePath ? '' : '/')
 }
 
 export type LocalizeRoutesParams = MarkRequired<
@@ -80,7 +82,21 @@ export type LocalizeRoutesParams = MarkRequired<
 }
 
 type LocalizedRoute = NuxtPage & { locale: Locale; parent: NuxtPage | undefined }
-type LocalizeRouteParams = { localeCodes: string[]; parent?: NuxtPage; extraTree?: boolean }
+type LocalizeRouteParams = {
+  /**
+   * locales to use for localization
+   */
+  locales: string[]
+  /**
+   * parent route
+   */
+  parent?: NuxtPage
+  /**
+   * indicates whether this is a default route for 'prefix_and_default' strategy
+   */
+  extra?: boolean
+}
+
 /**
  * Localize routes
  *
@@ -96,83 +112,55 @@ export function localizeRoutes(routes: NuxtPage[], options: LocalizeRoutesParams
     return routes
   }
 
-  // normalize localeCodes
-  const _localeCodes = getNormalizedLocales(options.locales).map(x => x.code)
-
-  function localizeRoute(
-    route: NuxtPage,
-    { localeCodes = [], parent, extraTree = false }: LocalizeRouteParams
-  ): NuxtPage[] {
+  function localizeRoute(route: NuxtPage, { locales = [], parent, extra = false }: LocalizeRouteParams): NuxtPage[] {
     // skip route localization
     if (route.redirect && !route.file) {
       return [route]
     }
 
     // resolve with route (page) options
-    const routeOptions = options.optionsResolver?.(route, localeCodes)
+    const routeOptions = options.optionsResolver?.(route, locales)
     if (options.optionsResolver != null && routeOptions == null) {
       return [route]
     }
 
     // component specific options
     const componentOptions: ComputedRouteOptions = {
-      locales: localeCodes,
+      // filter locales to prevent child routes from being localized even though they are disabled in the configuration.
+      locales: locales.filter(locale => (routeOptions?.locales ?? locales).includes(locale)),
       paths: {},
       ...routeOptions
     }
 
-    // double check locales to remove any locales not found in pageOptions.
-    // this is there to prevent children routes being localized even though they are disabled in the configuration.
-    if ((routeOptions?.locales.length ?? 0) > 0) {
-      componentOptions.locales = componentOptions.locales.filter(locale => routeOptions?.locales.includes(locale))
-    }
-
-    const localizedRoutes: LocalizedRoute[] = []
+    const localizedRoutes: (LocalizedRoute | NuxtPage)[] = []
     for (const locale of componentOptions.locales) {
-      const isDefaultLocale = locale === options.defaultLocale
       const localized: LocalizedRoute = { ...route, locale, parent }
+      const isDefaultLocale = locale === options.defaultLocale
+      const addDefaultTree = isDefaultLocale && options.strategy === 'prefix_and_default' && parent == null && !extra
+
+      // localize route again for strategy `prefix_and_default`
+      if (addDefaultTree && parent == null && !extra) {
+        localizedRoutes.push(...localizeRoute(route, { locales: [locale], extra: true }))
+      }
+
+      const nameSegments = [localized.name, options.routesNameSeparator, locale]
+      if (extra) {
+        nameSegments.push(options.routesNameSeparator, options.defaultLocaleRouteNameSuffix)
+      }
 
       // localize name if set
-      localized.name &&= join(localized.name, options.routesNameSeparator, locale)
+      localized.name &&= join(...nameSegments)
 
       // localize child routes if set
       localized.children &&= localized.children.flatMap(child =>
-        localizeRoute(child, { localeCodes: [locale], parent: route, extraTree })
+        localizeRoute(child, { locales: [locale], parent: route, extra })
       )
 
       // use custom path if found
       localized.path = componentOptions.paths?.[locale] ?? localized.path
 
-      // For 'prefix_and_default' strategy and default locale:
-      // - if it's a parent page, add it with default locale suffix added (no suffix if page has children)
-      // - if it's a child page of that extra parent page, append default suffix to it
-      if (isDefaultLocale && options.strategy === 'prefix_and_default') {
-        if (parent == null) {
-          const defaultRoute = { ...localized }
-          defaultRoute.name &&= join(
-            defaultRoute.name,
-            options.routesNameSeparator,
-            options.defaultLocaleRouteNameSuffix
-          )
-
-          // recreate child routes with default suffix added
-          defaultRoute.children &&= defaultRoute.children.flatMap(childRoute =>
-            // extraTree argument is true to indicate that this is extra route added for 'prefix_and_default' strategy
-            localizeRoute(childRoute, {
-              localeCodes: [localized.locale],
-              parent: localized.parent,
-              extraTree: true
-            })
-          )
-          localizedRoutes.push(defaultRoute)
-        } else if (extraTree) {
-          localized.name &&= join(localized.name, options.routesNameSeparator, options.defaultLocaleRouteNameSuffix)
-        }
-      }
-
-      // add route prefix
-      const shouldAddPrefix = localizeRoutesPrefixable(localized, options)
-      if (shouldAddPrefix) {
+      const localePrefixable = prefixLocalizedRoute(localized, options, extra)
+      if (localePrefixable) {
         localized.path = join('/', locale, localized.path)
 
         if (isDefaultLocale && options.strategy === 'prefix' && options.includeUnprefixedFallback) {
@@ -180,10 +168,11 @@ export function localizeRoutes(routes: NuxtPage[], options: LocalizeRoutesParams
         }
       }
 
-      localized.path &&= adjustRoutePathForTrailingSlash(localized.path, options.trailingSlash, parent)
+      localized.path &&= adjustRoutePathForTrailingSlash(localized, options.trailingSlash)
       localizedRoutes.push(localized)
     }
 
+    // remove properties used for localization process
     return localizedRoutes.flatMap((x: MarkOptional<LocalizedRoute, 'parent' | 'locale'>) => {
       delete x.parent
       delete x.locale
@@ -191,5 +180,7 @@ export function localizeRoutes(routes: NuxtPage[], options: LocalizeRoutesParams
     })
   }
 
-  return routes.flatMap(route => localizeRoute(route, { localeCodes: _localeCodes }))
+  return routes.flatMap(route =>
+    localizeRoute(route, { locales: getNormalizedLocales(options.locales).map(x => x.code) })
+  )
 }
