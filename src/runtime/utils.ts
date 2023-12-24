@@ -498,7 +498,12 @@ export type HeadParam = Required<Pick<HeadSafe, 'meta' | 'link'>>
 type IdParam = NonNullable<I18nHeadOptions['identifierAttribute']>
 
 export function addHreflangLinks(locales: LocaleObject[], head: HeadParam, idAttribute: IdParam) {
+<<<<<<< Updated upstream
   const { defaultLocale, strategy, baseUrl } = getComposer(useNuxtApp().$i18n)
+=======
+  const i18n = getComposer(useNuxtApp().$i18n)
+  const { defaultLocale, strategy, baseUrl } = i18n
+>>>>>>> Stashed changes
   const switchLocalePath = useSwitchLocalePath()
 
   if (strategy === STRATEGIES.NO_PREFIX) {
@@ -555,7 +560,12 @@ export function addCanonicalLinksAndOgUrl(
   idAttribute: IdParam,
   seoAttributesOptions: SeoAttributesOptions = {}
 ) {
+<<<<<<< Updated upstream
   const { baseUrl } = getComposer(useNuxtApp().$i18n)
+=======
+  const i18n = getComposer(useNuxtApp().$i18n)
+  const { baseUrl } = i18n
+>>>>>>> Stashed changes
   const route = useRoute()
   const localeRoute = useLocaleRoute()
   const getRouteBaseName = useRouteBaseName()

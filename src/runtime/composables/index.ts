@@ -3,18 +3,19 @@ import { ref, computed, watch, onUnmounted } from 'vue'
 import { parseAcceptLanguage } from '../internal'
 import { nuxtI18nInternalOptions, nuxtI18nOptionsDefault, localeCodes as _localeCodes } from '#build/i18n.options.mjs'
 import { getActiveHead } from 'unhead'
-import { useI18n } from 'vue-i18n'
 import {
   getComposer,
   findBrowserLocale,
   getLocale,
   getLocales,
+  useLocaleHead as _useLocaleHead
+} from 'vue-i18n-routing'
+import {
   useRouteBaseName as _useRouteBaseName,
   useLocalePath as _useLocalePath,
   useLocaleRoute as _useLocaleRoute,
-  useSwitchLocalePath as _useSwitchLocalePath,
-  useLocaleHead as _useLocaleHead
-} from 'vue-i18n-routing'
+  useSwitchLocalePath as _useSwitchLocalePath
+} from '../routing/composables'
 
 import type { Ref } from 'vue'
 import type { DetectBrowserLanguageOptions } from '#build/i18n.options.mjs'
@@ -45,14 +46,22 @@ import {
  */
 export type SetI18nParamsFunction = (params: Record<string, unknown>) => void
 export function useSetI18nParams(seoAttributes?: SeoAttributesOptions): SetI18nParamsFunction {
+<<<<<<< Updated upstream
   const route = useRoute()
   // const router = useRouter()
+=======
+>>>>>>> Stashed changes
   const head = getActiveHead()
 
-  const i18n = useI18n()
+  const i18n = getComposer(useNuxtApp().$i18n)
   const locale = getLocale(i18n)
   const locales = getNormalizedLocales(getLocales(i18n))
+<<<<<<< Updated upstream
   const _i18nParams = ref({})
+=======
+  const route = useRoute()
+  const router = useRouter()
+>>>>>>> Stashed changes
 
   const i18nParams = computed({
     get() {
@@ -94,6 +103,17 @@ export function useSetI18nParams(seoAttributes?: SeoAttributesOptions): SetI18nP
 
     head?.push(metaObject)
   }
+
+  const stop = watch(
+    () => router.currentRoute.value,
+    () => {
+      setMeta()
+    }
+  )
+
+  onUnmounted(() => {
+    stop()
+  })
 
   return function (params: Record<string, unknown>) {
     i18nParams.value = { ...params }
