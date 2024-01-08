@@ -124,8 +124,4 @@ export type NuxtI18nOptions<Context = unknown> = {
   | 'trailingSlash'
 >
 
-export type NuxtI18nInternalOptions = {
-  __normalizedLocales?: LocaleObject[]
-}
-
 export type VueI18nConfig = () => Promise<{ default: I18nOptions | (() => I18nOptions | Promise<I18nOptions>) }>

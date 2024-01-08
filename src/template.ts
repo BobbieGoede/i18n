@@ -1,13 +1,11 @@
 import { generateLoaderOptions } from './gen'
-import { DEFAULT_OPTIONS } from './constants'
+import { DEFAULT_OPTIONS, NUXT_I18N_MODULE_ID } from './constants'
 
 import type { LocaleObject } from 'vue-i18n-routing'
 
 export type TemplateNuxtI18nOptions = {
-  NUXT_I18N_MODULE_ID: string
   localeCodes: string[]
-  nuxtI18nOptionsDefault: typeof DEFAULT_OPTIONS
-  nuxtI18nInternalOptions: { __normalizedLocales: LocaleObject[] }
+  normalizedLocales: LocaleObject[]
   dev: boolean
   isSSG: boolean
   parallelPlugin: boolean
@@ -39,11 +37,11 @@ export const vueI18nConfigs = [
 
 export const nuxtI18nOptions = ${JSON.stringify(options.nuxtI18nOptions, null, 2)}
 
-export const nuxtI18nOptionsDefault = ${JSON.stringify(options.nuxtI18nOptionsDefault, null, 2)}
+export const nuxtI18nOptionsDefault = ${JSON.stringify(DEFAULT_OPTIONS, null, 2)}
 
-export const nuxtI18nInternalOptions = ${JSON.stringify(options.nuxtI18nInternalOptions, null, 2)}
+export const normalizedLocales = ${JSON.stringify(options.normalizedLocales, null, 2)}
 
-export const NUXT_I18N_MODULE_ID = "${options.NUXT_I18N_MODULE_ID}"
+export const NUXT_I18N_MODULE_ID = "${NUXT_I18N_MODULE_ID}"
 export const parallelPlugin = ${options.parallelPlugin}
 export const isSSG = ${options.isSSG}
 

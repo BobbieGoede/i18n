@@ -21,7 +21,7 @@ export const vueI18nConfigs: VueI18nConfig[]
 export const localeCodes: string[] = []
 export const nuxtI18nOptions: DeepRequired<NuxtI18nOptions<Context>> = {}
 export const nuxtI18nOptionsDefault: NuxtI18nOptionsDefault = {}
-export const nuxtI18nInternalOptions: DeepRequired<NuxtI18nInternalOptions> = {}
+export const normalizedLocales: LocaleObject[] = []
 export const NUXT_I18N_MODULE_ID = ''
 export const isSSG = false
 export const parallelPlugin: boolean
@@ -30,6 +30,7 @@ export {
   NuxtI18nOptions,
   NuxtI18nOptionsDefault,
   NuxtI18nInternalOptions,
+  normalizedLocales,
   DetectBrowserLanguageOptions,
   RootRedirectOptions
 } from './types'

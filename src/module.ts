@@ -214,10 +214,8 @@ export default defineNuxtModule<NuxtI18nOptions>({
           nuxtI18nOptions,
           isServer
         }),
-        NUXT_I18N_MODULE_ID,
         localeCodes,
-        nuxtI18nOptionsDefault: DEFAULT_OPTIONS,
-        nuxtI18nInternalOptions: { __normalizedLocales: normalizedLocales },
+        normalizedLocales,
         dev: nuxt.options.dev,
         isSSG: nuxt.options._generate,
         parallelPlugin: options.parallelPlugin
