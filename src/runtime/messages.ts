@@ -47,15 +47,11 @@ export function makeFallbackLocaleCodes(fallback: FallbackLocale, locales: Local
 export async function loadInitialMessages(
   messages: LocaleMessages<DefineLocaleMessage>,
   localeLoaders: Record<Locale, LocaleLoader[]>,
-  options: {
-    initialLocale: Locale
-    fallbackLocale: FallbackLocale
-    localeCodes: string[]
-  }
+  options: { initialLocale: Locale; fallbackLocale: FallbackLocale }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<Record<string, any>> {
-  const { initialLocale, localeCodes, fallbackLocale } = options
-  const { defaultLocale, lazy } = useRuntimeConfig().public.i18n
+  const { initialLocale, fallbackLocale } = options
+  const { defaultLocale, lazy, localeCodes } = useRuntimeConfig().public.i18n
 
   // load fallback messages
   if (lazy && fallbackLocale) {

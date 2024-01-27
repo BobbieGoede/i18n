@@ -39,11 +39,6 @@ exports[`basic 1`] = `
       ],
     ],
   ],
-  "nuxtI18nOptions": {
-    "defaultLocale": "en",
-    "lazy": false,
-    "locales": [],
-  },
   "vueI18nConfigs": [
     "() => import("../i18n.config.ts?hash=bffaebcb&config=1" /* webpackChunkName: "i18n_config_ts_bffaebcb" */)",
   ],
@@ -110,11 +105,6 @@ exports[`files with cache configuration 1`] = `
       ],
     ],
   ],
-  "nuxtI18nOptions": {
-    "defaultLocale": "en",
-    "lazy": true,
-    "locales": [],
-  },
   "vueI18nConfigs": [
     "() => import("../i18n.config.ts?hash=bffaebcb&config=1" /* webpackChunkName: "i18n_config_ts_bffaebcb" */)",
   ],
@@ -156,11 +146,6 @@ exports[`lazy 1`] = `
       ],
     ],
   ],
-  "nuxtI18nOptions": {
-    "defaultLocale": "en",
-    "lazy": true,
-    "locales": [],
-  },
   "vueI18nConfigs": [
     "() => import("../i18n.config.ts?hash=bffaebcb&config=1" /* webpackChunkName: "i18n_config_ts_bffaebcb" */)",
   ],
@@ -202,11 +187,6 @@ exports[`locale file in nested 1`] = `
       ],
     ],
   ],
-  "nuxtI18nOptions": {
-    "defaultLocale": "en",
-    "lazy": true,
-    "locales": [],
-  },
   "vueI18nConfigs": [
     "() => import("../i18n.config.ts?hash=bffaebcb&config=1" /* webpackChunkName: "i18n_config_ts_bffaebcb" */)",
   ],
@@ -273,11 +253,6 @@ exports[`multiple files 1`] = `
       ],
     ],
   ],
-  "nuxtI18nOptions": {
-    "defaultLocale": "en",
-    "lazy": true,
-    "locales": [],
-  },
   "vueI18nConfigs": [
     "() => import("../i18n.config.ts?hash=bffaebcb&config=1" /* webpackChunkName: "i18n_config_ts_bffaebcb" */)",
   ],
@@ -288,42 +263,6 @@ exports[`toCode: function (arrow) 1`] = `
 {
   "importStrings": [],
   "localeLoaders": [],
-  "nuxtI18nOptions": {
-    "defaultLocale": "en",
-    "lazy": false,
-    "locales": [
-      {
-        "code": "en",
-        "files": [
-          "en.json",
-        ],
-        "paths": [
-          "/path/to/en.json",
-        ],
-        "testFunc": [Function],
-      },
-      {
-        "code": "ja",
-        "files": [
-          "ja.json",
-        ],
-        "paths": [
-          "/path/to/ja.json",
-        ],
-        "testFunc": [Function],
-      },
-      {
-        "code": "fr",
-        "files": [
-          "fr.json",
-        ],
-        "paths": [
-          "/path/to/fr.json",
-        ],
-        "testFunc": [Function],
-      },
-    ],
-  },
   "vueI18nConfigs": [
     "() => import("../i18n.config.ts?hash=bffaebcb&config=1" /* webpackChunkName: "i18n_config_ts_bffaebcb" */)",
   ],
@@ -334,42 +273,6 @@ exports[`toCode: function (named) 1`] = `
 {
   "importStrings": [],
   "localeLoaders": [],
-  "nuxtI18nOptions": {
-    "defaultLocale": "en",
-    "lazy": false,
-    "locales": [
-      {
-        "code": "en",
-        "files": [
-          "en.json",
-        ],
-        "paths": [
-          "/path/to/en.json",
-        ],
-        "testFunc": [Function],
-      },
-      {
-        "code": "ja",
-        "files": [
-          "ja.json",
-        ],
-        "paths": [
-          "/path/to/ja.json",
-        ],
-        "testFunc": [Function],
-      },
-      {
-        "code": "fr",
-        "files": [
-          "fr.json",
-        ],
-        "paths": [
-          "/path/to/fr.json",
-        ],
-        "testFunc": [Function],
-      },
-    ],
-  },
   "vueI18nConfigs": [
     "() => import("../i18n.config.ts?hash=bffaebcb&config=1" /* webpackChunkName: "i18n_config_ts_bffaebcb" */)",
   ],
@@ -415,11 +318,6 @@ exports[`vueI18n option 1`] = `
       ],
     ],
   ],
-  "nuxtI18nOptions": {
-    "lazy": false,
-    "locales": [],
-    "vueI18n": "vue-i18n.config.ts",
-  },
   "vueI18nConfigs": [
     "() => import("../foo/layer2/vue-i18n.options.js?hash=475488e5&config=1" /* webpackChunkName: "vue_i18n_options_js_475488e5" */)",
     "() => import("../layer1/i18n.custom.ts?hash=0ca697e2&config=1" /* webpackChunkName: "i18n_custom_ts_0ca697e2" */)",

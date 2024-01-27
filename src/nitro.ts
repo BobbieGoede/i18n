@@ -119,6 +119,7 @@ export { localeDetector }
 
     // setup debug flag
     nitroConfig.replace['__DEBUG__'] = String(nuxtOptions.debug)
+    nitroConfig.replace['__NUXT_I18N_MODULE_ID__'] = JSON.stringify(NUXT_I18N_MODULE_ID)
     debug('nitro.replace', nitroConfig.replace)
   })
 

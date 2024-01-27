@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { isString, assign } from '@intlify/shared'
 import { parsePath, parseQuery, withTrailingSlash, withoutTrailingSlash } from 'ufo'
-import { DEFAULT_DYNAMIC_PARAMS_KEY } from '#build/i18n.options.mjs'
 import { unref, useNuxtApp, useRoute, useRouter, useRuntimeConfig } from '#imports'
 
 import { resolve, routeToObject } from './utils'
@@ -214,7 +213,7 @@ function getLocalizableMetaFromDynamicParams(
   route: RouteLocationNormalizedLoaded
 ): Record<Locale, Record<string, unknown>> {
   const meta = route.meta || {}
-  return (unref(meta)?.[DEFAULT_DYNAMIC_PARAMS_KEY] || {}) as Record<Locale, any>
+  return (unref(meta)?.nuxtI18n || {}) as Record<Locale, any>
 }
 
 /**

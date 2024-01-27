@@ -32,7 +32,7 @@ const generateVueI18nConfiguration = (config: Required<VueI18nConfigPathInfo>, i
   )
 }
 
-function simplifyLocaleOptions(nuxt: Nuxt, options: NuxtI18nOptions) {
+export function simplifyLocaleOptions(nuxt: Nuxt, options: NuxtI18nOptions): string[] | LocaleObject[] {
   const isLocaleObjectsArray = (locales?: string[] | LocaleObject[]) => locales?.some(x => typeof x !== 'string')
 
   const hasLocaleObjects =
@@ -54,7 +54,7 @@ function simplifyLocaleOptions(nuxt: Nuxt, options: NuxtI18nOptions) {
     delete locale.file
 
     return locale
-  })
+  }) as string[] | LocaleObject[]
 }
 
 export function generateLoaderOptions(
@@ -102,16 +102,9 @@ export function generateLoaderOptions(
 
   const localeLoaders = localeInfo.map(locale => [locale.code, locale.meta?.map(meta => importMapper.get(meta.key))])
 
-  const generatedNuxtI18nOptions = {
-    ...nuxtI18nOptions,
-    locales: simplifyLocaleOptions(nuxt, nuxtI18nOptions)
-  }
-  delete nuxtI18nOptions.vueI18n
-
   const generated = {
     importStrings,
     localeLoaders,
-    nuxtI18nOptions: generatedNuxtI18nOptions,
     vueI18nConfigs: vueI18nConfigImports
   }
 

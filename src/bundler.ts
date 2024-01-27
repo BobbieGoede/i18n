@@ -14,6 +14,7 @@ import type { NuxtI18nOptions } from './types'
 import type { TransformMacroPluginOptions } from './transform/macros'
 import type { ResourcePluginOptions } from './transform/resource'
 import { MetaDeprecationPlugin, type MetaDeprecationPluginOptions } from './transform/meta-deprecation'
+import { NUXT_I18N_MODULE_ID } from './constants'
 
 const debug = createDebug('@nuxtjs/i18n:bundler')
 
@@ -78,7 +79,9 @@ export async function extendBundler(nuxt: Nuxt, nuxtOptions: Required<NuxtI18nOp
               dropMessageCompiler: nuxtOptions.compilation.jit ? nuxtOptions.bundle.dropMessageCompiler : false
             }),
             {
-              __DEBUG__: String(nuxtOptions.debug)
+              __DEBUG__: String(nuxtOptions.debug),
+              __NUXT_I18N_MODULE_ID__: JSON.stringify(NUXT_I18N_MODULE_ID),
+              __NUXT_I18N_PLUGIN_PARALLEL__: JSON.stringify(nuxtOptions.parallelPlugin)
             }
           )
         )
@@ -115,13 +118,10 @@ export async function extendBundler(nuxt: Nuxt, nuxtOptions: Required<NuxtI18nOp
   addVitePlugin(MetaDeprecationPlugin.vite(metaDeprecationOptions))
 
   extendViteConfig(config => {
-    if (config.define) {
-      config.define['__DEBUG__'] = JSON.stringify(nuxtOptions.debug)
-    } else {
-      config.define = {
-        __DEBUG__: JSON.stringify(nuxtOptions.debug)
-      }
-    }
+    config.define ??= {}
+    config.define['__DEBUG__'] = JSON.stringify(nuxtOptions.debug)
+    config.define['__NUXT_I18N_MODULE_ID__'] = JSON.stringify(NUXT_I18N_MODULE_ID)
+    config.define['__NUXT_I18N_PLUGIN_PARALLEL__'] = JSON.stringify(nuxtOptions.parallelPlugin)
     debug('vite.config.define', config.define)
   })
 }

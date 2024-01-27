@@ -1,6 +1,6 @@
 import { defineI18nMiddleware } from '@intlify/h3'
 import { useRuntimeConfig } from '#imports'
-import { localeCodes, vueI18nConfigs, localeLoaders } from '#internal/i18n/options.mjs'
+import { vueI18nConfigs, localeLoaders } from '#internal/i18n/options.mjs'
 import { defineNitroPlugin } from 'nitropack/dist/runtime/plugin'
 // @ts-ignore
 import { localeDetector as _localeDetector } from '#internal/i18n/locale.detector.mjs'
@@ -19,12 +19,11 @@ export default defineNitroPlugin(async nitro => {
   options.messages = options.messages || {}
   const fallbackLocale = (options.fallbackLocale = options.fallbackLocale ?? false) as FallbackLocale
 
-  const runtimeI18n = useRuntimeConfig().public.i18n
-  const initialLocale = runtimeI18n.defaultLocale || options.locale || 'en-US'
+  const { lazy, defaultLocale } = useRuntimeConfig().public.i18n
+  const initialLocale = defaultLocale || options.locale || 'en-US'
 
   // load initial locale messages for intlify/h3
   options.messages = await loadInitialMessages(options.messages, localeLoaders, {
-    localeCodes,
     initialLocale,
     fallbackLocale: options.fallbackLocale
   })
@@ -34,7 +33,7 @@ export default defineNitroPlugin(async nitro => {
     i18nContext: CoreContext<string, DefineLocaleMessage>
   ): Promise<Locale> => {
     const locale = _localeDetector(event, { defaultLocale: initialLocale, fallbackLocale: options.fallbackLocale })
-    if (runtimeI18n.lazy) {
+    if (lazy) {
       if (fallbackLocale) {
         const fallbackLocales = makeFallbackLocaleCodes(fallbackLocale, [locale])
         await Promise.all(

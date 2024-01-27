@@ -1,15 +1,7 @@
 import { computed } from 'vue'
 import { createI18n } from 'vue-i18n'
 import { defineNuxtPlugin, useRoute, addRouteMiddleware, defineNuxtRouteMiddleware, useNuxtApp } from '#imports'
-import {
-  localeCodes,
-  vueI18nConfigs,
-  nuxtI18nOptions as _nuxtI18nOptions,
-  isSSG,
-  localeLoaders,
-  parallelPlugin,
-  normalizedLocales
-} from '#build/i18n.options.mjs'
+import { vueI18nConfigs, localeLoaders } from '#build/i18n.options.mjs'
 import { loadVueI18nOptions, loadInitialMessages } from '../messages'
 import {
   loadAndSetLocale,
@@ -37,25 +29,28 @@ import type { getRouteBaseName, localePath, localeRoute, switchLocalePath, local
 
 export default defineNuxtPlugin({
   name: 'i18n:plugin',
-  parallel: parallelPlugin,
+  parallel: __NUXT_I18N_PLUGIN_PARALLEL__,
   async setup(nuxt) {
     const route = useRoute()
     const { vueApp: app } = nuxt
     const nuxtContext = nuxt as unknown as NuxtApp
 
     // Fresh copy per request to prevent reusing mutated options
-    const nuxtI18nOptions = { ..._nuxtI18nOptions }
-    // @ts-ignore
-    nuxtI18nOptions.baseUrl = extendBaseUrl()
-    const runtimeI18n = nuxt.$config.public.i18n
+    const baseUrl = extendBaseUrl()
+    const {
+      isSSG,
+      detectBrowserLanguage: _detectBrowserLanguage,
+      defaultLocale,
+      strategy,
+      localeCodes,
+      locales,
+      differentDomains,
+      normalizedLocales
+    } = nuxt.$config.public.i18n
 
     __DEBUG__ && console.log('isSSG', isSSG)
-    __DEBUG__ &&
-      console.log(
-        'useCookie on setup',
-        runtimeI18n.detectBrowserLanguage && runtimeI18n.detectBrowserLanguage.useCookie
-      )
-    __DEBUG__ && console.log('defaultLocale on setup', runtimeI18n.defaultLocale)
+    __DEBUG__ && console.log('useCookie on setup', _detectBrowserLanguage && _detectBrowserLanguage.useCookie)
+    __DEBUG__ && console.log('defaultLocale on setup', defaultLocale)
 
     const vueI18nOptions: I18nOptions = await loadVueI18nOptions(vueI18nConfigs, useNuxtApp())
     vueI18nOptions.messages = vueI18nOptions.messages || {}
@@ -69,9 +64,9 @@ export default defineNuxtPlugin({
       route,
       getLocaleFromRoute,
       vueI18nOptions.locale,
-      getDefaultLocale(runtimeI18n.defaultLocale),
+      getDefaultLocale(defaultLocale),
       {
-        ssg: isSSG && runtimeI18n.strategy === 'no_prefix' ? 'ssg_ignore' : 'normal',
+        ssg: isSSG && strategy === 'no_prefix' ? 'ssg_ignore' : 'normal',
         callType: 'setup',
         firstAccess: true
       }
@@ -80,7 +75,6 @@ export default defineNuxtPlugin({
 
     // load initial vue-i18n locale messages
     vueI18nOptions.messages = await loadInitialMessages(vueI18nOptions.messages, localeLoaders, {
-      localeCodes,
       initialLocale,
       fallbackLocale: vueI18nOptions.fallbackLocale
     })
@@ -106,7 +100,7 @@ export default defineNuxtPlugin({
      * NOTE:
      *  avoid hydration mismatch for SSG mode
      */
-    if (isSSGModeInitialSetup() && runtimeI18n.strategy === 'no_prefix' && process.client) {
+    if (isSSGModeInitialSetup() && strategy === 'no_prefix' && process.client) {
       nuxt.hook('app:mounted', async () => {
         __DEBUG__ && console.log('hook app:mounted')
         const {
@@ -114,7 +108,7 @@ export default defineNuxtPlugin({
           stat,
           reason,
           from
-        } = runtimeI18n.detectBrowserLanguage
+        } = _detectBrowserLanguage
           ? detectBrowserLanguage(
               route,
               vueI18nOptions.locale,
@@ -137,16 +131,18 @@ export default defineNuxtPlugin({
 
     // extend i18n instance
     extendI18n(i18n, {
-      // @ts-ignore
-      locales: nuxtI18nOptions.locales,
+      locales,
       localeCodes,
-      baseUrl: nuxtI18nOptions.baseUrl,
+      baseUrl,
       context: nuxtContext,
       hooks: {
         onExtendComposer(composer: Composer) {
-          composer.strategy = runtimeI18n.strategy
+          composer.strategy = strategy
           composer.localeProperties = computed(
-            () => normalizedLocales.find(l => l.code === composer.locale.value) || { code: composer.locale.value }
+            () =>
+              normalizedLocales.find(l => l.code === composer.locale.value) || {
+                code: composer.locale.value
+              }
           )
           composer.setLocale = async (locale: string) => {
             const localeSetup = isInitialLocaleSetup(locale)
@@ -173,8 +169,8 @@ export default defineNuxtPlugin({
               { enableNavigate: true }
             )
           }
-          composer.differentDomains = runtimeI18n.differentDomains
-          composer.defaultLocale = runtimeI18n.defaultLocale
+          composer.differentDomains = differentDomains
+          composer.defaultLocale = defaultLocale
           composer.getBrowserLocale = () => _getBrowserLocale()
           composer.getLocaleCookie = () => _getLocaleCookie()
           composer.setLocaleCookie = (locale: string) => _setLocaleCookie(locale)
@@ -378,10 +374,10 @@ export default defineNuxtPlugin({
           getLocaleFromRoute,
           vueI18nOptions.locale,
           () => {
-            return getLocale(i18n) || getDefaultLocale(runtimeI18n.defaultLocale)
+            return getLocale(i18n) || getDefaultLocale(defaultLocale)
           },
           {
-            ssg: isSSGModeInitialSetup() && runtimeI18n.strategy === 'no_prefix' ? 'ssg_ignore' : 'normal',
+            ssg: isSSGModeInitialSetup() && strategy === 'no_prefix' ? 'ssg_ignore' : 'normal',
             callType: 'routing',
             firstAccess: routeChangeCount === 0
           }
@@ -400,7 +396,7 @@ export default defineNuxtPlugin({
         const redirectPath = detectRedirect({
           route: { to, from },
           targetLocale: locale,
-          routeLocaleGetter: runtimeI18n.strategy === 'no_prefix' ? () => locale : getLocaleFromRoute,
+          routeLocaleGetter: strategy === 'no_prefix' ? () => locale : getLocaleFromRoute,
           calledWithRouting: true
         })
         __DEBUG__ && console.log('redirectPath on locale-changing middleware', redirectPath)

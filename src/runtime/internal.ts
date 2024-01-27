@@ -11,7 +11,6 @@ import {
   useNuxtApp,
   unref
 } from '#imports'
-import { NUXT_I18N_MODULE_ID, isSSG, localeCodes, normalizedLocales } from '#build/i18n.options.mjs'
 
 import type { NuxtApp } from '#app'
 import type { Locale } from 'vue-i18n'
@@ -20,7 +19,7 @@ import { findBrowserLocale, getLocalesRegex, getI18nTarget } from './routing/uti
 import type { RouteLocationNormalized, RouteLocationNormalizedLoaded } from 'vue-router'
 
 export function formatMessage(message: string) {
-  return NUXT_I18N_MODULE_ID + ' ' + message
+  return __NUXT_I18N_MODULE_ID__ + ' ' + message
 }
 
 export function callVueI18nInterfaces(i18n: any, name: string, ...args: any[]): any {
@@ -77,6 +76,7 @@ export function parseAcceptLanguage(input: string): string[] {
 
 export function getBrowserLocale(): string | undefined {
   let ret: string | undefined
+  const { normalizedLocales } = useRuntimeConfig().public.i18n
 
   if (process.client) {
     if (navigator.languages) {
@@ -98,7 +98,7 @@ export function getBrowserLocale(): string | undefined {
 }
 
 export function getLocaleCookie(): string | undefined {
-  const detect = useRuntimeConfig().public.i18n.detectBrowserLanguage
+  const { detectBrowserLanguage: detect, localeCodes } = useRuntimeConfig().public.i18n
 
   __DEBUG__ &&
     console.log('getLocaleCookie', {
@@ -178,7 +178,7 @@ export function detectBrowserLanguage(
   detectLocaleContext: DetectLocaleContext,
   locale: Locale = ''
 ): DetectBrowserLanguageFromResult {
-  const { strategy, detectBrowserLanguage } = useRuntimeConfig().public.i18n
+  const { strategy, detectBrowserLanguage, localeCodes, isSSG } = useRuntimeConfig().public.i18n
   const { ssg, callType, firstAccess } = detectLocaleContext
   __DEBUG__ && console.log('detectBrowserLanguage: (ssg, callType, firstAccess) - ', ssg, callType, firstAccess)
 
@@ -343,12 +343,11 @@ export function getLocaleDomain(locales: LocaleObject[]): string {
 }
 
 export function getDomainFromLocale(localeCode: Locale): string | undefined {
-  const runtimeConfig = useRuntimeConfig()
+  const { domainLocales, normalizedLocales } = useRuntimeConfig().public.i18n
   const nuxtApp = useNuxtApp()
   // lookup the `differentDomain` origin associated with given locale.
-  const config = runtimeConfig.public.i18n as { locales?: Record<Locale, { domain?: string }> }
   const lang = normalizedLocales.find(locale => locale.code === localeCode)
-  const domain = config?.locales?.[localeCode]?.domain ?? lang?.domain
+  const domain = domainLocales?.[localeCode]?.domain ?? lang?.domain
 
   if (domain) {
     if (hasProtocol(domain, { strict: true })) {

@@ -17,7 +17,7 @@ import { setupAlias } from './alias'
 import { setupPages } from './pages'
 import { setupNitro } from './nitro'
 import { extendBundler } from './bundler'
-import { generateI18nPageTypes, generateI18nTypes, generateLoaderOptions } from './gen'
+import { generateI18nPageTypes, generateI18nTypes, generateLoaderOptions, simplifyLocaleOptions } from './gen'
 import {
   NUXT_I18N_MODULE_ID,
   DEFAULT_OPTIONS,
@@ -41,7 +41,8 @@ import { applyLayerOptions, checkLayerOptions, resolveLayerVueI18nConfigInfo } f
 import { generateTemplateNuxtI18nOptions } from './template'
 
 import type { HookResult } from '@nuxt/schema'
-import type { NuxtI18nOptions } from './types'
+import type { LocaleObject, NuxtI18nOptions } from './types'
+import type { Locale } from 'vue-i18n'
 
 export * from './types'
 
@@ -136,42 +137,8 @@ export default defineNuxtModule<NuxtI18nOptions>({
     filterLocales(options, nuxt)
 
     /**
-     * setup runtime config
-     */
-
-    // for public
-
-    nuxt.options.runtimeConfig.public.i18n = defu(nuxt.options.runtimeConfig.public.i18n, {
-      baseUrl: options.baseUrl,
-      defaultLocale: options.defaultLocale,
-      defaultDirection: options.defaultDirection,
-      strategy: options.strategy,
-      detectBrowserLanguage: options.detectBrowserLanguage,
-      lazy: options.lazy,
-      rootRedirect: options.rootRedirect,
-      routesNameSeparator: options.routesNameSeparator,
-      defaultLocaleRouteNameSuffix: options.defaultLocaleRouteNameSuffix,
-      skipSettingLocaleOnNavigate: options.skipSettingLocaleOnNavigate,
-      differentDomains: options.differentDomains,
-      trailingSlash: options.trailingSlash,
-      locales: options.locales.reduce(
-        (obj, locale) => {
-          if (typeof locale === 'string') {
-            obj[locale] = { domain: undefined }
-          } else {
-            obj[locale.code] = { domain: locale.domain }
-          }
-          return obj
-        },
-        {} as Record<string, { domain: string | undefined }>
-      )
-      // TODO: we should support more i18n module options. welcome PRs :-)
-    })
-
-    /**
      * resolve locale info
      */
-
     const normalizedLocales = getNormalizedLocales(options.locales)
     const localeCodes = normalizedLocales.map(locale => locale.code)
     const localeInfo = await resolveLocales(
@@ -182,9 +149,58 @@ export default defineNuxtModule<NuxtI18nOptions>({
     debug('localeInfo', localeInfo)
 
     /**
+     * setup runtime config
+     */
+    // @ts-ignore
+    nuxt.options.runtimeConfig.public.i18n = defu(
+      nuxt.options.runtimeConfig.public.i18n,
+      { domainLocales: nuxt.options.runtimeConfig.public?.i18n?.locales ?? [] },
+      {
+        baseUrl: options.baseUrl,
+        domainLocales: options.locales.reduce(
+          (obj, locale) => {
+            const code = typeof locale === 'string' ? locale : locale.code
+            if (typeof locale === 'string') {
+              obj[code] = { domain: undefined }
+            } else {
+              obj[code] = { domain: locale.domain }
+            }
+            return obj
+          },
+          {} as Record<Locale, { domain?: string }>
+        )
+        // TODO: we should support more i18n module options. welcome PRs :-)
+      }
+    )
+
+    /**
+     * overwrite values with merged and generated options
+     */
+    nuxt.options.runtimeConfig.public.i18n = defu(
+      {
+        lazy: options.lazy,
+        defaultLocale: options.defaultLocale,
+        defaultDirection: options.defaultDirection,
+        strategy: options.strategy,
+        detectBrowserLanguage: options.detectBrowserLanguage,
+        rootRedirect: options.rootRedirect,
+        routesNameSeparator: options.routesNameSeparator,
+        defaultLocaleRouteNameSuffix: options.defaultLocaleRouteNameSuffix,
+        skipSettingLocaleOnNavigate: options.skipSettingLocaleOnNavigate,
+        differentDomains: options.differentDomains,
+        trailingSlash: options.trailingSlash,
+        localeCodes,
+        normalizedLocales,
+        dev: nuxt.options.dev,
+        isSSG: nuxt.options._generate
+      },
+      nuxt.options.runtimeConfig.public.i18n
+    )
+    nuxt.options.runtimeConfig.public.i18n.locales = simplifyLocaleOptions(nuxt, options)
+
+    /**
      * resolve vue-i18n config path
      */
-
     const vueI18nConfigPaths = await resolveLayerVueI18nConfigInfo(nuxt, nuxt.options.buildDir)
     debug('VueI18nConfigPaths', vueI18nConfigPaths)
 
@@ -219,19 +235,9 @@ export default defineNuxtModule<NuxtI18nOptions>({
       if (lazy != null) {
         nuxtI18nOptions.lazy = lazy
       }
-      return generateTemplateNuxtI18nOptions({
-        ...generateLoaderOptions(nuxt, {
-          vueI18nConfigPaths,
-          localeInfo,
-          nuxtI18nOptions,
-          isServer
-        }),
-        localeCodes,
-        normalizedLocales,
-        dev: nuxt.options.dev,
-        isSSG: nuxt.options._generate,
-        parallelPlugin: options.parallelPlugin
-      })
+      return generateTemplateNuxtI18nOptions(
+        generateLoaderOptions(nuxt, { vueI18nConfigPaths, localeInfo, nuxtI18nOptions, isServer })
+      )
     }
 
     addTemplate({
@@ -348,20 +354,73 @@ export default defineNuxtModule<NuxtI18nOptions>({
 export interface ModuleOptions extends NuxtI18nOptions {}
 
 export interface ModulePublicRuntimeConfig {
-  i18n: Pick<NuxtI18nOptions<unknown>, 'baseUrl' | 'rootRedirect'> &
-    Pick<
-      Required<NuxtI18nOptions<unknown>>,
-      | 'differentDomains'
-      | 'skipSettingLocaleOnNavigate'
-      | 'defaultLocale'
-      | 'lazy'
-      | 'defaultDirection'
-      | 'detectBrowserLanguage'
-      | 'strategy'
-      | 'routesNameSeparator'
-      | 'defaultLocaleRouteNameSuffix'
-      | 'trailingSlash'
-    >
+  i18n: {
+    baseUrl: NuxtI18nOptions['baseUrl']
+    /**
+     * @internal
+     */
+    rootRedirect: NuxtI18nOptions['rootRedirect']
+    /**
+     * @internal
+     */
+    differentDomains: NonNullable<NuxtI18nOptions['differentDomains']>
+    /**
+     * @internal
+     */
+    skipSettingLocaleOnNavigate: NonNullable<NuxtI18nOptions['skipSettingLocaleOnNavigate']>
+    /**
+     * @internal
+     */
+    defaultLocale: NonNullable<NuxtI18nOptions['defaultLocale']>
+    /**
+     * @internal
+     */
+    lazy: NonNullable<NuxtI18nOptions['lazy']>
+    /**
+     * @internal
+     */
+    defaultDirection: NonNullable<NuxtI18nOptions['defaultDirection']>
+    /**
+     * @internal
+     */
+    detectBrowserLanguage: NonNullable<NuxtI18nOptions['detectBrowserLanguage']>
+    /**
+     * @internal
+     */
+    strategy: NonNullable<NuxtI18nOptions['strategy']>
+    /**
+     * @internal
+     */
+    routesNameSeparator: NonNullable<NuxtI18nOptions['routesNameSeparator']>
+    /**
+     * @internal
+     */
+    defaultLocaleRouteNameSuffix: NonNullable<NuxtI18nOptions['defaultLocaleRouteNameSuffix']>
+    /**
+     * @internal
+     */
+    trailingSlash: NonNullable<NuxtI18nOptions['trailingSlash']>
+    /**
+     * @internal
+     */
+    localeCodes: string[]
+    /**
+     * @internal
+     */
+    normalizedLocales: LocaleObject[]
+    /**
+     * @internal
+     */
+    domainLocales?: Record<Locale, { domain?: string }>
+    /**
+     * @internal
+     */
+    locales?: string[] | LocaleObject[]
+    dev: boolean
+    isSSG: boolean
+    moduleId: string
+    parallelPlugin: boolean
+  }
 }
 
 export interface ModuleHooks {
