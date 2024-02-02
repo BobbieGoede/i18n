@@ -25,7 +25,8 @@ import {
   getLocaleCookie as _getLocaleCookie,
   setLocaleCookie as _setLocaleCookie,
   detectBrowserLanguage,
-  DefaultDetectBrowserLanguageFromResult
+  DefaultDetectBrowserLanguageFromResult,
+  prepareAndProvideMatchers
 } from '../internal'
 import { getComposer, getLocale, setLocale } from '../routing/utils'
 import { extendI18n, createLocaleFromRouteGetter } from '../routing/extends'
@@ -48,6 +49,7 @@ export default defineNuxtPlugin({
     const route = useRoute()
     const { vueApp: app } = nuxt
     const nuxtContext = nuxt as unknown as NuxtApp
+    prepareAndProvideMatchers(nuxtContext)
 
     // Fresh copy per request to prevent reusing mutated options
     const nuxtI18nOptions = { ..._nuxtI18nOptions }

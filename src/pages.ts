@@ -1,6 +1,7 @@
 import createDebug from 'debug'
-import { extendPages } from '@nuxt/kit'
-import { isString } from '@intlify/shared'
+import { genObjectFromRaw } from 'knitwork'
+import { addTemplate, extendPages, updateTemplates } from '@nuxt/kit'
+import { isBoolean, isString } from '@intlify/shared'
 import { parse as parseSFC, compileScript } from '@vue/compiler-sfc'
 import { walk } from 'estree-walker'
 import MagicString from 'magic-string'
@@ -39,27 +40,85 @@ export function setupPages(options: Required<NuxtI18nOptions>, nuxt: Nuxt) {
   const srcDir = nuxt.options.srcDir
   debug(`pagesDir: ${pagesDir}, srcDir: ${srcDir}, trailingSlash: ${options.trailingSlash}`)
 
-  extendPages(pages => {
-    debug('pages making ...', pages)
-    const ctx: NuxtPageAnalyzeContext = {
-      stack: [],
-      srcDir,
-      pagesDir,
-      pages: new Map<NuxtPage, AnalyzedNuxtPageMeta>()
+  // @ts-ignore
+  nuxt.i18nPages = []
+
+  addTemplate({
+    filename: 'i18n-routes.mjs',
+    write: true,
+    getContents() {
+      const obj = {}
+      // @ts-ignore
+      for (const p of nuxt.i18nPages) {
+        // @ts-ignore
+        obj[p.locale] ??= []
+        // @ts-ignore
+        obj[p.locale].push(JSON.stringify(p, null, 2))
+      }
+
+      // @ts-ignore
+      obj.undefined ??= []
+      // @ts-ignore
+      obj['disabled-localization'] = obj.undefined
+      // @ts-ignore
+      delete obj.undefined
+      // @ts-ignore
+      // if ('undefined' in obj) {
+      //   // @ts-ignore
+      //   for (const p of obj.undefined) {
+      //     for (const l of Object.keys(obj).filter(k => k !== 'undefined')) {
+      //       // @ts-ignore
+      //       obj[l] ??= []
+      //       // @ts-ignore
+      //       obj[l].push(p)
+      //     }
+      //   }
+      // }
+
+      // @ts-ignore
+      for (const p of nuxt.i18nPagesClean) {
+        // @ts-ignore
+        obj['not-localized'] ??= []
+        // @ts-ignore
+        obj['not-localized'].push(JSON.stringify(p, null, 2))
+      }
+      // console.log("adding i18n-routes template", obj);
+      return `export default ${genObjectFromRaw(obj)}`
+    }
+  })
+
+  extendPages(async pages => {
+    // @ts-ignore
+    nuxt.i18nPagesClean = [...pages]
+    if (options.strategy !== 'no_prefix') {
+      debug('pages making ...', pages)
+      const ctx: NuxtPageAnalyzeContext = {
+        stack: [],
+        srcDir,
+        pagesDir,
+        pages: new Map<NuxtPage, AnalyzedNuxtPageMeta>()
+      }
+
+      analyzeNuxtPages(ctx, pages)
+      const analyzer = (pageDirOverride: string) => analyzeNuxtPages(ctx, pages, pageDirOverride)
+      mergeLayerPages(analyzer, nuxt)
+
+      const localizedPages = localizeRoutes(pages, {
+        ...options,
+        includeUnprefixedFallback,
+        optionsResolver: getRouteOptionsResolver(ctx, options)
+      })
+
+      pages.splice(0, pages.length)
+      pages.unshift(...(localizedPages as NuxtPage[]))
+      debug('... made pages', pages)
+      // @ts-ignore
+      nuxt.i18nPages = localizedPages
     }
 
-    analyzeNuxtPages(ctx, pages)
-    const analyzer = (pageDirOverride: string) => analyzeNuxtPages(ctx, pages, pageDirOverride)
-    mergeLayerPages(analyzer, nuxt)
-
-    const localizedPages = localizeRoutes(pages, {
-      ...options,
-      includeUnprefixedFallback,
-      optionsResolver: getRouteOptionsResolver(ctx, options)
+    await updateTemplates({
+      filter: template => template.filename === 'i18n-routes.mjs'
     })
-    pages.splice(0, pages.length)
-    pages.unshift(...(localizedPages as NuxtPage[]))
-    debug('... made pages', pages)
   })
 }
 
@@ -161,11 +220,15 @@ function getRouteOptionsFromPages(
   }
 
   // remove disabled locales from page options
-  options.locales = options.locales.filter(locale => pageOptions[locale] !== false)
+  options.locales = options.locales
 
   // construct paths object
   for (const locale of options.locales) {
     const customLocalePath = pageOptions[locale]
+    if (isBoolean(customLocalePath)) {
+      options.paths[locale] = customLocalePath
+    }
+
     if (isString(customLocalePath)) {
       // set custom path if any
       options.paths[locale] = resolveRoutePath(customLocalePath)

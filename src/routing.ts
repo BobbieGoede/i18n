@@ -3,7 +3,7 @@ import { getNormalizedLocales } from './utils'
 import type { Locale } from 'vue-i18n'
 import type { NuxtPage } from '@nuxt/schema'
 import type { MarkRequired, MarkOptional } from 'ts-essentials'
-import type { NuxtI18nOptions, PrefixLocalizedRouteOptions, RouteOptionsResolver } from './types'
+import type { ComputedRouteOptions, NuxtI18nOptions, PrefixLocalizedRouteOptions, RouteOptionsResolver } from './types'
 
 const join = (...args: (string | undefined)[]) => args.filter(Boolean).join('')
 
@@ -15,10 +15,10 @@ const join = (...args: (string | undefined)[]) => args.filter(Boolean).join('')
  *
  * @public
  */
-export declare interface ComputedRouteOptions {
-  locales: readonly string[]
-  paths: Record<string, string>
-}
+// export declare interface ComputedRouteOptions {
+//   locales: readonly string[]
+//   paths: Record<string, string>
+// }
 
 export function prefixLocalizedRoute(
   localizeOptions: PrefixLocalizedRouteOptions,
@@ -93,6 +93,7 @@ export function localizeRoutes(routes: NuxtPage[], options: LocalizeRoutesParams
     if (options.optionsResolver != null && routeOptions == null) {
       return [route]
     }
+    console.log(routeOptions)
 
     // component specific options
     const componentOptions: ComputedRouteOptions = {
@@ -101,6 +102,13 @@ export function localizeRoutes(routes: NuxtPage[], options: LocalizeRoutesParams
       paths: {},
       ...routeOptions
     }
+    // componentOptions.locales = [...componentOptions.locales]
+    // for (const l of locales) {
+    //   if (!componentOptions!.locales.includes(l)) {
+    //     componentOptions.locales.push(l)
+    //     componentOptions.paths[l] = false
+    //   }
+    // }
 
     const localizedRoutes: (LocalizedRoute | NuxtPage)[] = []
     for (const locale of componentOptions.locales) {
@@ -127,7 +135,13 @@ export function localizeRoutes(routes: NuxtPage[], options: LocalizeRoutesParams
       )
 
       // use custom path if found
-      localized.path = componentOptions.paths?.[locale] ?? localized.path
+      const customPath = componentOptions.paths?.[locale]
+      localized.path = (typeof customPath === 'string' && customPath) || localized.path
+      if (typeof customPath === 'boolean') {
+        console.log(localized, customPath)
+        localized.meta ??= {}
+        localized.meta.__i18n = false
+      }
 
       const localePrefixable = prefixLocalizedRoute(localized, options, extra)
       if (localePrefixable) {
@@ -143,11 +157,13 @@ export function localizeRoutes(routes: NuxtPage[], options: LocalizeRoutesParams
     }
 
     // remove properties used for localization process
-    return localizedRoutes.flatMap((x: MarkOptional<LocalizedRoute, 'parent' | 'locale'>) => {
-      delete x.parent
-      delete x.locale
-      return x
-    })
+    return localizedRoutes
+      .flatMap((x: MarkOptional<LocalizedRoute, 'parent' | 'locale'>) => {
+        delete x.parent
+        // delete x.locale
+        return x
+      })
+      .filter(x => x.meta?.__i18n !== false)
   }
 
   return routes.flatMap(route =>

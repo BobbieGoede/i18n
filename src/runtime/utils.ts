@@ -23,7 +23,8 @@ import {
   defineGetter,
   getLocaleDomain,
   getDomainFromLocale,
-  DefaultDetectBrowserLanguageFromResult
+  DefaultDetectBrowserLanguageFromResult,
+  useI18nMatchers
 } from './internal'
 import { loadLocale, makeFallbackLocaleCodes } from './messages'
 import { useLocaleRoute, useSwitchLocalePath, useLocalePath, useLocaleHead } from '#i18n'
@@ -38,7 +39,7 @@ import { getLocale, setLocale, getLocaleCodes, getI18nTarget } from './routing/u
 import type { I18n, Locale, FallbackLocale, Composer, VueI18n } from 'vue-i18n'
 import type { NuxtApp } from '#app'
 import type { Router } from '#vue-router'
-import type { DetectLocaleContext } from './internal'
+import type { DetectLocaleContext, I18nRouteMatchers } from './internal'
 import type { HeadSafe } from '@unhead/vue'
 import type { createLocaleFromRouteGetter } from './routing/extends/router'
 import type { RouteLocationNormalized, RouteLocationNormalizedLoaded } from 'vue-router'
@@ -85,12 +86,14 @@ export async function finalizePendingLocaleChange(i18n: I18n) {
  * @internal
  */
 export type CommonComposableOptions = {
+  localeMatchers: I18nRouteMatchers
   router: Router
   i18n: I18n
   runtimeConfig: RuntimeConfig
 }
 export function initCommonComposableOptions(i18n?: I18n): CommonComposableOptions {
   return {
+    localeMatchers: useI18nMatchers(),
     i18n: i18n ?? useNuxtApp().$i18n,
     router: useRouter(),
     runtimeConfig: useRuntimeConfig()

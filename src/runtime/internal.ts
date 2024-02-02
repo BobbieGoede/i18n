@@ -20,10 +20,14 @@ import {
   normalizedLocales
 } from '#build/i18n.options.mjs'
 import { findBrowserLocale, getLocalesRegex, getI18nTarget } from './routing/utils'
+import { createMemoryHistory, createRouter } from 'vue-router'
+// @ts-expect-error virtual
+import i18nRoutes from '#build/i18n-routes.mjs'
 
 import type { Locale } from 'vue-i18n'
 import type { DetectBrowserLanguageOptions, LocaleObject } from '#build/i18n.options.mjs'
-import type { RouteLocationNormalized, RouteLocationNormalizedLoaded } from 'vue-router'
+import type { RouteLocationNormalized, RouteLocationNormalizedLoaded, Router } from 'vue-router'
+import type { NuxtApp } from 'nuxt/app'
 
 export function formatMessage(message: string) {
   return NUXT_I18N_MODULE_ID + ' ' + message
@@ -354,6 +358,54 @@ export function getDomainFromLocale(localeCode: Locale): string | undefined {
   }
 
   console.warn(formatMessage('Could not find domain name for locale ' + localeCode))
+}
+
+// export const localeMatcherKey = Symbol('i18n-matchers') as unknown as string
+export const localeMatcherKey = 'i18nMatchers'
+
+export type I18nRouteMatchers = {
+  default: Router
+  'not-localized': Router
+  'disabled-localization': Router
+  [locale: string]: Router
+}
+
+export function useI18nMatchers() {
+  return useNuxtApp()['$' + localeMatcherKey]! as I18nRouteMatchers
+}
+
+export function prepareAndProvideMatchers(nuxt: NuxtApp) {
+  const matcherMap = i18nRoutes as Record<string, any[]>
+  const localeMatchers: Record<string, Router> = {}
+  const routerBase = useRuntimeConfig().app.baseURL
+  // if (routerOptions.hashMode && !routerBase.includes('#')) {
+  //   // allow the user to provide a `#` in the middle: `/base/#/app`
+  //   routerBase += '#'
+  // }
+  for (const locale in matcherMap) {
+    // @ts-ignore
+    localeMatchers[locale] = createRouter({ routes: matcherMap[locale], history: createMemoryHistory(routerBase) })
+  }
+
+  const defaultHandler = {
+    get: function (target: any, property: string, receiver: any) {
+      if (!property) return target
+      if (property in target) {
+        return Reflect.get(target, property, receiver)
+      } else {
+        // Return the value of the default key
+        return target.empty
+        // return target.default
+      }
+    }
+  }
+  const localeRouteResolver = new Proxy(localeMatchers, defaultHandler)
+
+  nuxt.provide(localeMatcherKey, localeMatchers as I18nRouteMatchers)
+  nuxt.provide('basicResolveObject', localeMatchers as I18nRouteMatchers)
+  nuxt.provide('i18nResolve', (route: string, locale?: string) =>
+    (localeRouteResolver as I18nRouteMatchers)[locale ?? 'empty'].resolve(route)
+  )
 }
 
 /* eslint-enable @typescript-eslint/no-explicit-any */

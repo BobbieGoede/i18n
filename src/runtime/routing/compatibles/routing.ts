@@ -4,7 +4,7 @@ import { parsePath, parseQuery, withTrailingSlash, withoutTrailingSlash } from '
 import { nuxtI18nOptions, DEFAULT_DYNAMIC_PARAMS_KEY } from '#build/i18n.options.mjs'
 import { unref } from '#imports'
 
-import { resolve, routeToObject } from './utils'
+import { routeToObject } from './utils'
 import { getLocale, getLocaleRouteName, getRouteName } from '../utils'
 import { extendPrefixable, extendSwitchLocalePathIntercepter, type CommonComposableOptions } from '../../utils'
 
@@ -136,6 +136,7 @@ export function resolveRoute(common: CommonComposableOptions, route: RouteLocati
       const { pathname: path, search, hash } = parsePath(route)
       const query = parseQuery(search)
       _route = { path, query, hash }
+      // _route = { path: route }
     } else {
       // else use it as route name.
       _route = { name: route }
@@ -148,20 +149,36 @@ export function resolveRoute(common: CommonComposableOptions, route: RouteLocati
 
   const isRouteLocationPathRaw = (val: RouteLocationPathRaw | RouteLocationNamedRaw): val is RouteLocationPathRaw =>
     'path' in val && !!val.path && !('name' in val)
-
+  const localeMatcherExists = (localeEntry: string) => localeEntry in common.localeMatchers
   if (isRouteLocationPathRaw(localizedRoute)) {
-    const resolvedRoute = resolve(common, localizedRoute, strategy, _locale)
+    let resolvedRoute
+    try {
+      resolvedRoute = common.localeMatchers['not-localized'].resolve(localizedRoute, common.router.currentRoute.value)
+    } catch (err) {
+      console.warn(err)
+    }
 
-    // @ts-ignore
-    const resolvedRouteName = getRouteBaseName(resolvedRoute)
+    // resolvedRoute ??= resolve(common, localizedRoute, strategy, _locale)
+    resolvedRoute = resolvedRoute!
+    if (common.localeMatchers['disabled-localization'].hasRoute(resolvedRoute.name!)) {
+      return common.localeMatchers['disabled-localization'].resolve(resolvedRoute)
+    }
+
+    const resolvedRouteName = resolvedRoute.name
     if (isString(resolvedRouteName)) {
+      const localizedRouteName = getLocaleRouteName(resolvedRouteName, _locale, {
+        defaultLocale,
+        strategy,
+        routesNameSeparator,
+        defaultLocaleRouteNameSuffix
+      })
+      const hasLocalizedRouteName =
+        localeMatcherExists(_locale) && common.localeMatchers[_locale].hasRoute(localizedRouteName)
+      if (!hasLocalizedRouteName) {
+        return null
+      }
       localizedRoute = {
-        name: getLocaleRouteName(resolvedRouteName, _locale, {
-          defaultLocale,
-          strategy,
-          routesNameSeparator,
-          defaultLocaleRouteNameSuffix
-        }),
+        name: localizedRouteName,
         // @ts-ignore
         params: resolvedRoute.params,
         query: resolvedRoute.query,
@@ -185,18 +202,35 @@ export function resolveRoute(common: CommonComposableOptions, route: RouteLocati
       localizedRoute.name = getRouteBaseName(router.currentRoute.value)
     }
 
+    if (common.localeMatchers['disabled-localization'].hasRoute(localizedRoute.name!)) {
+      return common.localeMatchers['disabled-localization'].resolve(localizedRoute)
+    }
+
     localizedRoute.name = getLocaleRouteName(localizedRoute.name, _locale, {
       defaultLocale,
       strategy,
       routesNameSeparator,
       defaultLocaleRouteNameSuffix
     })
+
+    const hasLocalizedRouteName =
+      localeMatcherExists(_locale) && common.localeMatchers[_locale].hasRoute(localizedRoute.name!)
+    if (!hasLocalizedRouteName) {
+      return null
+    }
   }
 
   try {
-    const resolvedRoute = router.resolve(localizedRoute)
-    if (resolvedRoute.name) {
-      return resolvedRoute
+    try {
+      const resolvedRoute = common.localeMatchers?.[_locale].resolve(localizedRoute, common.router.currentRoute.value)
+      if (resolvedRoute.name) {
+        if (resolvedRoute?.meta.__i18n === false) {
+          return null
+        }
+        return resolvedRoute
+      }
+    } catch (err) {
+      console.warn(err)
     }
 
     // if didn't resolve to an existing route then just return resolved route based on original input.

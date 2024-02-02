@@ -257,8 +257,8 @@ export type BaseUrlResolveHandler<Context = any> = (context: Context) => string
  * @public
  */
 export interface ComputedRouteOptions {
-  locales: readonly string[]
-  paths: Record<string, string>
+  locales: string[]
+  paths: Record<string, string | boolean>
 }
 
 /**
