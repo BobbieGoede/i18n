@@ -1,6 +1,13 @@
 import { computed } from 'vue'
 import { createI18n } from 'vue-i18n'
-import { defineNuxtPlugin, useRoute, addRouteMiddleware, defineNuxtRouteMiddleware, useNuxtApp } from '#imports'
+import {
+  defineNuxtPlugin,
+  useRoute,
+  addRouteMiddleware,
+  defineNuxtRouteMiddleware,
+  useNuxtApp,
+  useRuntimeConfig
+} from '#imports'
 import {
   localeCodes,
   vueI18nConfigs,
@@ -41,6 +48,31 @@ import type {
   SwitchLocalePathFunction
 } from '../composables'
 
+// @ts-expect-error virtual
+import { routesUnprefixed, routesDisabled } from '#build/routes-i18n.mjs'
+import {
+  createMemoryHistory,
+  createRouter,
+  type RouteLocationNormalized,
+  type RouteLocationNormalizedLoaded,
+  type Router
+} from 'vue-router'
+import type { RouteLocationRaw } from 'vue-router'
+
+export function useRouterUnprefixed() {
+  return useNuxtApp()['$routerUnprefixed']! as Router
+}
+
+export function useRouterDisabled() {
+  return useNuxtApp()['$routerDisabled']! as Router
+}
+
+export function useGetRouteLocale() {
+  return useNuxtApp()['$getRouteLocale']! as (
+    route: RouteLocationRaw | RouteLocationNormalizedLoaded | RouteLocationNormalized | string
+  ) => string
+}
+
 export default defineNuxtPlugin({
   name: 'i18n:plugin',
   parallel: parallelPlugin,
@@ -48,6 +80,15 @@ export default defineNuxtPlugin({
     const route = useRoute()
     const { vueApp: app } = nuxt
     const nuxtContext = nuxt as unknown as NuxtApp
+    const getLocaleFromRoute = createLocaleFromRouteGetter()
+
+    const routerBase = useRuntimeConfig().app.baseURL
+    const routerUnprefixed = createRouter({ routes: routesUnprefixed, history: createMemoryHistory(routerBase) })
+    const routerDisabled = createRouter({ routes: routesDisabled, history: createMemoryHistory(routerBase) })
+
+    nuxt.provide('routerUnprefixed', routerUnprefixed)
+    nuxt.provide('routerDisabled', routerDisabled)
+    nuxt.provide('getRouteLocale', getLocaleFromRoute)
 
     // Fresh copy per request to prevent reusing mutated options
     const nuxtI18nOptions = { ..._nuxtI18nOptions }
@@ -65,7 +106,6 @@ export default defineNuxtPlugin({
     vueI18nOptions.messages = vueI18nOptions.messages || {}
     vueI18nOptions.fallbackLocale = vueI18nOptions.fallbackLocale ?? false
 
-    const getLocaleFromRoute = createLocaleFromRouteGetter()
     const getDefaultLocale = (defaultLocale: string) => defaultLocale || vueI18nOptions.locale || 'en-US'
 
     // detect initial locale

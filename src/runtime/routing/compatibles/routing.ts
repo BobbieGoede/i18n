@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { isString, assign } from '@intlify/shared'
-import { parsePath, parseQuery, withTrailingSlash, withoutTrailingSlash } from 'ufo'
 import { nuxtI18nOptions, DEFAULT_DYNAMIC_PARAMS_KEY } from '#build/i18n.options.mjs'
 import { unref } from '#imports'
 
-import { resolve, routeToObject } from './utils'
-import { getLocale, getLocaleRouteName, getRouteName } from '../utils'
-import { extendPrefixable, extendSwitchLocalePathIntercepter, type CommonComposableOptions } from '../../utils'
+import { resolveByName, routeToObject } from './utils'
+import { getLocale, getRouteName } from '../utils'
+import { extendSwitchLocalePathIntercepter, type CommonComposableOptions } from '../../utils'
 
 import type { Strategies, PrefixableOptions, SwitchLocalePathIntercepter } from '#build/i18n.options.mjs'
 import type { Locale } from 'vue-i18n'
@@ -14,8 +12,6 @@ import type {
   RouteLocation,
   RouteLocationRaw,
   Router,
-  RouteLocationPathRaw,
-  RouteLocationNamedRaw,
   RouteLocationNormalizedLoaded,
   RouteLocationNormalized
 } from 'vue-router'
@@ -124,83 +120,36 @@ export function localeLocation(
 }
 
 export function resolveRoute(common: CommonComposableOptions, route: RouteLocationRaw, locale: Locale | undefined) {
-  const { router, i18n } = common
-  const _locale = locale || getLocale(i18n)
-  const { routesNameSeparator, defaultLocale, defaultLocaleRouteNameSuffix, strategy, trailingSlash } = nuxtI18nOptions
-  const prefixable = extendPrefixable()
-  // if route parameter is a string, check if it's a path or name of route.
-  let _route: RouteLocationPathRaw | RouteLocationNamedRaw
-  if (isString(route)) {
-    if (route[0] === '/') {
-      // if route parameter is a path, create route object with path.
-      const { pathname: path, search, hash } = parsePath(route)
-      const query = parseQuery(search)
-      _route = { path, query, hash }
-    } else {
-      // else use it as route name.
-      _route = { name: route }
+  const _locale = locale || getLocale(common.i18n)
+  const { strategy } = nuxtI18nOptions
+  // const prefixable = extendPrefixable()
+  const current = common.router.currentRoute.value
+  const resolveDelocalizedRoute = (r: RouteLocationRaw) => {
+    // string
+    if (typeof r === 'string') {
+      // name
+      if (!r.startsWith('/')) {
+        return common.routerUnprefixed.resolve({ name: r })
+      }
+      // path
+      return common.routerUnprefixed.resolve(r)
     }
-  } else {
-    _route = route
-  }
-
-  let localizedRoute = assign({} as RouteLocationPathRaw | RouteLocationNamedRaw, _route)
-
-  const isRouteLocationPathRaw = (val: RouteLocationPathRaw | RouteLocationNamedRaw): val is RouteLocationPathRaw =>
-    'path' in val && !!val.path && !('name' in val)
-
-  if (isRouteLocationPathRaw(localizedRoute)) {
-    const resolvedRoute = resolve(common, localizedRoute, strategy, _locale)
-
-    // @ts-ignore
-    const resolvedRouteName = getRouteBaseName(resolvedRoute)
-    if (isString(resolvedRouteName)) {
-      localizedRoute = {
-        name: getLocaleRouteName(resolvedRouteName, _locale, {
-          defaultLocale,
-          strategy,
-          routesNameSeparator,
-          defaultLocaleRouteNameSuffix
-        }),
-        // @ts-ignore
-        params: resolvedRoute.params,
-        query: resolvedRoute.query,
-        hash: resolvedRoute.hash
-      } as RouteLocationNamedRaw
-
-      // @ts-expect-error
-      localizedRoute.state = (resolvedRoute as ResolveV4).state
-    } else {
-      // if route has a path defined but no name, resolve full route using the path
-      if (prefixable({ currentLocale: _locale, defaultLocale, strategy })) {
-        localizedRoute.path = `/${_locale}${localizedRoute.path}`
+    // object
+    else {
+      if ('path' in r === false && 'name' in r === false) {
+        'params' in r === false && (r.params ??= current.params)
+        r.name ??= getRouteBaseName(current)
       }
 
-      localizedRoute.path = trailingSlash
-        ? withTrailingSlash(localizedRoute.path, true)
-        : withoutTrailingSlash(localizedRoute.path, true)
+      'query' in r === false && (r.query ??= current.query)
+      'hash' in r === false && (r.hash ??= current.hash)
+      return common.routerUnprefixed.resolve(r)
     }
-  } else {
-    if (!localizedRoute.name && !('path' in localizedRoute)) {
-      localizedRoute.name = getRouteBaseName(router.currentRoute.value)
-    }
-
-    localizedRoute.name = getLocaleRouteName(localizedRoute.name, _locale, {
-      defaultLocale,
-      strategy,
-      routesNameSeparator,
-      defaultLocaleRouteNameSuffix
-    })
   }
 
   try {
-    const resolvedRoute = router.resolve(localizedRoute)
-    if (resolvedRoute.name) {
-      return resolvedRoute
-    }
-
-    // if didn't resolve to an existing route then just return resolved route based on original input.
-    return router.resolve(route)
+    const _route = resolveDelocalizedRoute(route)
+    return resolveByName(common, _route, strategy, _locale)
   } catch (e: unknown) {
     // `1` is No match
     if (typeof e === 'object' && 'type' in e! && e.type === 1) {

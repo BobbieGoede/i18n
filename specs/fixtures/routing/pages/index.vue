@@ -37,7 +37,9 @@ const localeRoute = useLocaleRoute()
       <span class="query-foo-string-about">{{ localePath('/about?foo=1') }}</span>
       <span class="query-foo-test-string">{{ localePath('/about?foo=1&test=2') }}</span>
       <span class="query-foo-path-param">{{ localePath('/path/as a test?foo=bar sentence') }}</span>
-      <span class="query-foo-path-param-escaped">{{ localePath('/path/as%20a%20test?foo=bar%20sentence') }} </span>
+      <span class="query-foo-path-param-escaped"
+        >{{ localePath('/path/as%20a%20test%20second?foo=bar%20sentence%20second') }}
+      </span>
       <span class="hash-path-about">{{ localePath({ path: '/about', hash: '#foo=bar' }) }}</span>
 
       <!-- no define path -->
