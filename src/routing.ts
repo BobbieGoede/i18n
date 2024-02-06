@@ -123,7 +123,9 @@ export function localizeRoutes(routes: NuxtPage[], options: LocalizeRoutesParams
         localized.meta ??= {}
         localized.meta.__i18n = false
       }
+      // @ts-ignore
       localized.i18n ??= {}
+      // @ts-ignore
       localized.i18n[locale] = customPath
 
       const localePrefixable = prefixLocalizedRoute(localized, options, extra)

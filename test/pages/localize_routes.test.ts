@@ -32,7 +32,9 @@ describe('localizeRoutes', function () {
         routes.forEach(route => {
           expect(localizedRoutes).to.deep.include({
             path: `/${locale}${route.path === '/' ? '' : route.path}`,
-            name: `${route.name}${nuxtOptions.routesNameSeparator}${locale}`
+            name: `${route.name}${nuxtOptions.routesNameSeparator}${locale}`,
+            locale: locale,
+            i18n: { [locale]: undefined }
           })
         })
       })
@@ -71,8 +73,12 @@ describe('localizeRoutes', function () {
             name: `${route.name}${nuxtOptions.routesNameSeparator}${locale}`,
             children: children.map(child => ({
               path: child.path,
-              name: `${child.name}${nuxtOptions.routesNameSeparator}${locale}`
-            }))
+              name: `${child.name}${nuxtOptions.routesNameSeparator}${locale}`,
+              locale: locale,
+              i18n: { [locale]: undefined }
+            })),
+            locale: locale,
+            i18n: { [locale]: undefined }
           })
         })
       })
@@ -100,7 +106,9 @@ describe('localizeRoutes', function () {
         routes.forEach(route => {
           expect(localizedRoutes).to.deep.include({
             path: `/${locale}${route.path === '/' ? '' : route.path}/`,
-            name: `${route.name}${nuxtOptions.routesNameSeparator}${locale}`
+            name: `${route.name}${nuxtOptions.routesNameSeparator}${locale}`,
+            locale: locale,
+            i18n: { [locale]: undefined }
           })
         })
       })
@@ -132,7 +140,9 @@ describe('localizeRoutes', function () {
         routes.forEach(route => {
           expect(localizedRoutes).to.deep.include({
             path: `/${locale}${route.path === '/' ? '' : route.path}`,
-            name: `${route.name}${'__'}${locale}`
+            name: `${route.name}${'__'}${locale}`,
+            locale: locale,
+            i18n: { [locale]: undefined }
           })
         })
       })
