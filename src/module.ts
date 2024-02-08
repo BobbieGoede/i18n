@@ -180,9 +180,9 @@ export default defineNuxtModule<NuxtI18nOptions>({
      * setup nuxt/pages
      */
 
-    if (options.strategy !== 'no_prefix' && localeCodes.length) {
-      await setupPages(options, nuxt)
-    }
+    // if (options.strategy !== 'no_prefix' && localeCodes.length) {
+    await setupPages(options, nuxt)
+    // }
 
     /**
      * setup module alias

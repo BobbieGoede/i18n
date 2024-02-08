@@ -93,8 +93,8 @@ test('can not access to disable route path', async () => {
   await page.locator('#lang-switcher-with-nuxt-link a').click()
   await waitForURL(page, '/fr')
 
-  // disalbe href with <NuxtLink>
-  expect(await page.locator('#link-category').getAttribute('href')).toBe(null)
+  // resolves to route without localization using <NuxtLink>
+  expect(await page.locator('#link-category').getAttribute('href')).toBe('/category/test')
 
   // disalbe direct url access
   let res: Response | (Error & { status: () => number }) | null = null

@@ -1,6 +1,6 @@
 import createDebug from 'debug'
-import { extendPages } from '@nuxt/kit'
-import { isString } from '@intlify/shared'
+import { addTemplate, extendPages, updateTemplates } from '@nuxt/kit'
+import { isBoolean, isString } from '@intlify/shared'
 import { parse as parseSFC, compileScript } from '@vue/compiler-sfc'
 import { walk } from 'estree-walker'
 import MagicString from 'magic-string'
@@ -13,6 +13,7 @@ import { NUXT_I18N_COMPOSABLE_DEFINE_ROUTE } from './constants'
 import type { Nuxt, NuxtPage } from '@nuxt/schema'
 import type { NuxtI18nOptions, CustomRoutePages, ComputedRouteOptions, RouteOptionsResolver } from './types'
 import type { Node, ObjectExpression, ArrayExpression } from '@babel/types'
+import { genArrayFromRaw } from 'knitwork'
 
 const debug = createDebug('@nuxtjs/i18n:pages')
 
@@ -38,28 +39,67 @@ export function setupPages(options: Required<NuxtI18nOptions>, nuxt: Nuxt) {
   const pagesDir = nuxt.options.dir && nuxt.options.dir.pages ? nuxt.options.dir.pages : 'pages'
   const srcDir = nuxt.options.srcDir
   debug(`pagesDir: ${pagesDir}, srcDir: ${srcDir}, trailingSlash: ${options.trailingSlash}`)
+  addTemplate({
+    filename: 'routes-i18n.mjs',
+    write: true,
+    getContents() {
+      nuxt.i18n ??= {}
+      nuxt.i18n.routesDisabled = []
 
-  extendPages(pages => {
+      for (const p of nuxt.i18n?.routesLocalized ?? []) {
+        // @ts-ignore
+        if (p.locale == null) {
+          nuxt.i18n.routesDisabled.push(p)
+        }
+      }
+
+      for (const p of nuxt.i18n?.routesLocalizedDisabled ?? []) {
+        nuxt.i18n.routesDisabled.push(p)
+      }
+
+      const unprefixed = (nuxt.i18n?.routesUnprefixed ?? []).map(x => JSON.stringify(x, null, 2))
+      const disabled = (nuxt.i18n?.routesDisabled ?? []).map(x => JSON.stringify(x, null, 2))
+      return [
+        `export const routesUnprefixed = ${genArrayFromRaw(unprefixed)}`,
+        `export const routesDisabled = ${genArrayFromRaw(disabled)}`
+      ].join('\n')
+    }
+  })
+
+  extendPages(async pages => {
     debug('pages making ...', pages)
-    const ctx: NuxtPageAnalyzeContext = {
-      stack: [],
-      srcDir,
-      pagesDir,
-      pages: new Map<NuxtPage, AnalyzedNuxtPageMeta>()
+    nuxt.i18n ??= {}
+    nuxt.i18n.routesUnprefixed = [...pages]
+
+    if (options.strategy !== 'no_prefix') {
+      const ctx: NuxtPageAnalyzeContext = {
+        stack: [],
+        srcDir,
+        pagesDir,
+        pages: new Map<NuxtPage, AnalyzedNuxtPageMeta>()
+      }
+
+      analyzeNuxtPages(ctx, pages)
+      const analyzer = (pageDirOverride: string) => analyzeNuxtPages(ctx, pages, pageDirOverride)
+      mergeLayerPages(analyzer, nuxt)
+
+      const localizedPages = localizeRoutes(pages, {
+        ...options,
+        includeUnprefixedFallback,
+        optionsResolver: getRouteOptionsResolver(ctx, options)
+      })
+
+      // console.log(nuxt.i18n, nuxt.i18n.routesLocalized)
+      nuxt.i18n.routesLocalizedDisabled = localizedPages.filter(x => x.meta?.__i18n === false)
+      nuxt.i18n.routesLocalized = localizedPages.filter(x => x.meta?.__i18n !== false)
+      pages.splice(0, pages.length)
+      pages.unshift(...(nuxt.i18n.routesLocalized as NuxtPage[]))
+      debug('... made pages', pages)
     }
 
-    analyzeNuxtPages(ctx, pages)
-    const analyzer = (pageDirOverride: string) => analyzeNuxtPages(ctx, pages, pageDirOverride)
-    mergeLayerPages(analyzer, nuxt)
-
-    const localizedPages = localizeRoutes(pages, {
-      ...options,
-      includeUnprefixedFallback,
-      optionsResolver: getRouteOptionsResolver(ctx, options)
+    await updateTemplates({
+      filter: template => template.filename === 'routes-i18n.mjs'
     })
-    pages.splice(0, pages.length)
-    pages.unshift(...(localizedPages as NuxtPage[]))
-    debug('... made pages', pages)
   })
 }
 
@@ -161,11 +201,16 @@ function getRouteOptionsFromPages(
   }
 
   // remove disabled locales from page options
-  options.locales = options.locales.filter(locale => pageOptions[locale] !== false)
+  options.locales = options.locales
 
   // construct paths object
   for (const locale of options.locales) {
     const customLocalePath = pageOptions[locale]
+    if (isBoolean(customLocalePath)) {
+      options.paths[locale] = customLocalePath
+      continue
+    }
+
     if (isString(customLocalePath)) {
       // set custom path if any
       options.paths[locale] = resolveRoutePath(customLocalePath)
@@ -212,6 +257,10 @@ function getRouteOptionsFromComponent(route: NuxtPage, localeCodes: string[]) {
 
   // construct paths object
   for (const [locale, path] of Object.entries(componentOptions.paths ?? {})) {
+    if (isBoolean(path)) {
+      options.paths[locale] = path
+      continue
+    }
     if (isString(path)) {
       options.paths[locale] = resolveRoutePath(path)
     }

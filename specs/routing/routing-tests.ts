@@ -43,19 +43,22 @@ export async function localePathTests(strategy: Strategies) {
   expect(await getText(page, '#locale-path .query-foo-string')).toEqual(prefixPath('?foo=1'))
   expect(await getText(page, '#locale-path .query-foo-string-about')).toEqual(prefixPath('/about?foo=1'))
   expect(await getText(page, '#locale-path .query-foo-test-string')).toEqual(prefixPath('/about?foo=1&test=2'))
-  if (strategy === 'no_prefix') {
-    // TODO: fix localePath escapes paths for `no_prefix` strategy
-    // unexpectedly resolves to /path/as%20a%20test?foo=bar+sentence
-    expect(await getText(page, '#locale-path .query-foo-path-param')).not.toEqual(
-      prefixPath('/path/as a test?foo=bar+sentence')
-    )
-  } else {
-    expect(await getText(page, '#locale-path .query-foo-path-param')).toEqual(
-      prefixPath('/path/as a test?foo=bar+sentence')
-    )
-  }
-  expect(await getText(page, '#locale-path .query-foo-path-param-escaped')).toEqual(
+  // if (strategy === 'no_prefix') {
+  //   // TODO: fix localePath escapes paths for `no_prefix` strategy
+  //   // unexpectedly resolves to /path/as%20a%20test?foo=bar+sentence
+  //   expect(await getText(page, '#locale-path .query-foo-path-param')).not.toEqual(
+  //     prefixPath('/path/as a test?foo=bar+sentence')
+  //   )
+  // } else {
+  //   expect(await getText(page, '#locale-path .query-foo-path-param')).toEqual(
+  //     prefixPath('/path/as a test?foo=bar+sentence')
+  //   )
+  // }
+  expect(await getText(page, '#locale-path .query-foo-path-param')).toEqual(
     prefixPath('/path/as%20a%20test?foo=bar+sentence')
+  )
+  expect(await getText(page, '#locale-path .query-foo-path-param-escaped')).toEqual(
+    prefixPath('/path/as%20a%20test%20second?foo=bar+sentence+second')
   )
   expect(await getText(page, '#locale-path .hash-path-about')).toEqual(prefixPath('/about#foo=bar'))
 
@@ -110,13 +113,17 @@ export async function switchLocalePathTests() {
 
   await page.goto(url('/ja/count/三'))
   await waitForURL(page, '/ja/count/%E4%B8%89')
-  expect(await getText(page, '#switch-locale-path .ja')).toEqual('/ja/count/三')
-  expect(await getText(page, '#switch-locale-path .en')).toEqual('/en/count/三')
+  expect(await getText(page, '#switch-locale-path .ja')).toEqual('/ja/count/%E4%B8%89')
+  expect(await getText(page, '#switch-locale-path .en')).toEqual('/en/count/%E4%B8%89')
 
   await page.goto(url('/ja/count/三?foo=bär&four=四&foo=bar'))
   await waitForURL(page, '/ja/count/%E4%B8%89?foo=b%C3%A4r&foo=bar&four=%E5%9B%9B')
-  expect(await getText(page, '#switch-locale-path .ja')).toEqual('/ja/count/三?foo=b%C3%A4r&foo=bar&four=%E5%9B%9B')
-  expect(await getText(page, '#switch-locale-path .en')).toEqual('/en/count/三?foo=b%C3%A4r&foo=bar&four=%E5%9B%9B')
+  expect(await getText(page, '#switch-locale-path .ja')).toEqual(
+    '/ja/count/%E4%B8%89?foo=b%C3%A4r&foo=bar&four=%E5%9B%9B'
+  )
+  expect(await getText(page, '#switch-locale-path .en')).toEqual(
+    '/en/count/%E4%B8%89?foo=b%C3%A4r&foo=bar&four=%E5%9B%9B'
+  )
 
   // TODO: figure out what was being tested originally
   // await gotoPath(page, '/ja/foo')

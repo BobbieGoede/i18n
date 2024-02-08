@@ -7,23 +7,39 @@ exports[`#1649 1`] = `
       {
         "children": [],
         "file": "/path/to/1649/pages/account/addresses.vue",
+        "i18n": {
+          "en": undefined,
+        },
+        "locale": "en",
         "name": "account-addresses___en",
         "path": "addresses",
       },
       {
         "children": [],
         "file": "/path/to/1649/pages/account/index.vue",
+        "i18n": {
+          "en": undefined,
+        },
+        "locale": "en",
         "name": "account___en",
         "path": "",
       },
       {
         "children": [],
         "file": "/path/to/1649/pages/account/profile.vue",
+        "i18n": {
+          "en": undefined,
+        },
+        "locale": "en",
         "name": "account-profile___en",
         "path": "profile",
       },
     ],
     "file": "/path/to/1649/pages/account.vue",
+    "i18n": {
+      "en": undefined,
+    },
+    "locale": "en",
     "path": "/account",
   },
   {
@@ -31,23 +47,39 @@ exports[`#1649 1`] = `
       {
         "children": [],
         "file": "/path/to/1649/pages/account/addresses.vue",
+        "i18n": {
+          "ja": undefined,
+        },
+        "locale": "ja",
         "name": "account-addresses___ja",
         "path": "addresses",
       },
       {
         "children": [],
         "file": "/path/to/1649/pages/account/index.vue",
+        "i18n": {
+          "ja": undefined,
+        },
+        "locale": "ja",
         "name": "account___ja",
         "path": "",
       },
       {
         "children": [],
         "file": "/path/to/1649/pages/account/profile.vue",
+        "i18n": {
+          "ja": undefined,
+        },
+        "locale": "ja",
         "name": "account-profile___ja",
         "path": "profile",
       },
     ],
     "file": "/path/to/1649/pages/account.vue",
+    "i18n": {
+      "ja": undefined,
+    },
+    "locale": "ja",
     "path": "/ja/account",
   },
   {
@@ -55,40 +87,68 @@ exports[`#1649 1`] = `
       {
         "children": [],
         "file": "/path/to/1649/pages/account/addresses.vue",
+        "i18n": {
+          "fr": "/compte/adresses",
+        },
+        "locale": "fr",
         "name": "account-addresses___fr",
         "path": "adresses",
       },
       {
         "children": [],
         "file": "/path/to/1649/pages/account/index.vue",
+        "i18n": {
+          "fr": undefined,
+        },
+        "locale": "fr",
         "name": "account___fr",
         "path": "",
       },
       {
         "children": [],
         "file": "/path/to/1649/pages/account/profile.vue",
+        "i18n": {
+          "fr": "/compte/profil",
+        },
+        "locale": "fr",
         "name": "account-profile___fr",
         "path": "profil",
       },
     ],
     "file": "/path/to/1649/pages/account.vue",
+    "i18n": {
+      "fr": "/compte",
+    },
+    "locale": "fr",
     "path": "/fr/compte",
   },
   {
     "children": [],
     "file": "/path/to/1649/pages/index.vue",
+    "i18n": {
+      "en": undefined,
+    },
+    "locale": "en",
     "name": "index___en",
     "path": "/",
   },
   {
     "children": [],
     "file": "/path/to/1649/pages/index.vue",
+    "i18n": {
+      "ja": undefined,
+    },
+    "locale": "ja",
     "name": "index___ja",
     "path": "/ja",
   },
   {
     "children": [],
     "file": "/path/to/1649/pages/index.vue",
+    "i18n": {
+      "fr": undefined,
+    },
+    "locale": "fr",
     "name": "index___fr",
     "path": "/fr",
   },
@@ -100,18 +160,30 @@ exports[`Module configuration > dynamic parameters 1`] = `
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/blog/[date]/[slug].vue",
+    "i18n": {
+      "en": undefined,
+    },
+    "locale": "en",
     "name": "blog-date-slug___en",
     "path": "/blog/:date/:slug",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/blog/[date]/[slug].vue",
+    "i18n": {
+      "ja": "/blog/tech/:date()/:slug()",
+    },
+    "locale": "ja",
     "name": "blog-date-slug___ja",
     "path": "/ja/blog/tech/:date()/:slug()",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/blog/[date]/[slug].vue",
+    "i18n": {
+      "fr": undefined,
+    },
+    "locale": "fr",
     "name": "blog-date-slug___fr",
     "path": "/fr/blog/:date/:slug",
   },
@@ -123,16 +195,28 @@ exports[`Module configuration > simple 1`] = `
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/about.vue",
+    "i18n": {
+      "en": "/about-us",
+    },
+    "locale": "en",
     "path": "/about-us",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/about.vue",
+    "i18n": {
+      "ja": "/about-us",
+    },
+    "locale": "ja",
     "path": "/ja/about-us",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/about.vue",
+    "i18n": {
+      "fr": "/a-propos",
+    },
+    "locale": "fr",
     "path": "/fr/a-propos",
   },
 ]
@@ -143,105 +227,177 @@ exports[`Module configuration > the part of URL 1`] = `
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/about.vue",
+    "i18n": {
+      "en": undefined,
+    },
+    "locale": "en",
     "path": "/about",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/about.vue",
+    "i18n": {
+      "ja": undefined,
+    },
+    "locale": "ja",
     "path": "/ja/about",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/about.vue",
+    "i18n": {
+      "fr": "/a-propos",
+    },
+    "locale": "fr",
     "path": "/fr/a-propos",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/services/coaching.vue",
+    "i18n": {
+      "en": undefined,
+    },
+    "locale": "en",
     "name": "services-coaching___en",
     "path": "/services/coaching",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/services/coaching.vue",
+    "i18n": {
+      "ja": undefined,
+    },
+    "locale": "ja",
     "name": "services-coaching___ja",
     "path": "/ja/services/coaching",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/services/coaching.vue",
+    "i18n": {
+      "fr": "/offres/formation",
+    },
+    "locale": "fr",
     "name": "services-coaching___fr",
     "path": "/fr/offres/formation",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/services/development/app.vue",
+    "i18n": {
+      "en": undefined,
+    },
+    "locale": "en",
     "name": "services-development-app___en",
     "path": "/services/development/app",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/services/development/app.vue",
+    "i18n": {
+      "ja": undefined,
+    },
+    "locale": "ja",
     "name": "services-development-app___ja",
     "path": "/ja/services/development/app",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/services/development/app.vue",
+    "i18n": {
+      "fr": "/offres/developement/app",
+    },
+    "locale": "fr",
     "name": "services-development-app___fr",
     "path": "/fr/offres/developement/app",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/services/development/index.vue",
+    "i18n": {
+      "en": undefined,
+    },
+    "locale": "en",
     "name": "services-development___en",
     "path": "/services/development",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/services/development/index.vue",
+    "i18n": {
+      "ja": undefined,
+    },
+    "locale": "ja",
     "name": "services-development___ja",
     "path": "/ja/services/development",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/services/development/index.vue",
+    "i18n": {
+      "fr": "/offres/developement",
+    },
+    "locale": "fr",
     "name": "services-development___fr",
     "path": "/fr/offres/developement",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/services/development/website.vue",
+    "i18n": {
+      "en": undefined,
+    },
+    "locale": "en",
     "name": "services-development-website___en",
     "path": "/services/development/website",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/services/development/website.vue",
+    "i18n": {
+      "ja": undefined,
+    },
+    "locale": "ja",
     "name": "services-development-website___ja",
     "path": "/ja/services/development/website",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/services/development/website.vue",
+    "i18n": {
+      "fr": "/offres/developement/site-web",
+    },
+    "locale": "fr",
     "name": "services-development-website___fr",
     "path": "/fr/offres/developement/site-web",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/services/index.vue",
+    "i18n": {
+      "en": undefined,
+    },
+    "locale": "en",
     "name": "services___en",
     "path": "/services",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/services/index.vue",
+    "i18n": {
+      "ja": undefined,
+    },
+    "locale": "ja",
     "name": "services___ja",
     "path": "/ja/services",
   },
   {
     "children": [],
     "file": "/path/to/nuxt-app/pages/services/index.vue",
+    "i18n": {
+      "fr": "/offres",
+    },
+    "locale": "fr",
     "name": "services___fr",
     "path": "/fr/offres",
   },
@@ -252,14 +408,26 @@ exports[`Page components > JavaScript 1`] = `
 [
   {
     "children": [],
+    "i18n": {
+      "en": "/about-us",
+    },
+    "locale": "en",
     "path": "/about-us",
   },
   {
     "children": [],
+    "i18n": {
+      "ja": "/about-ja",
+    },
+    "locale": "ja",
     "path": "/ja/about-ja",
   },
   {
     "children": [],
+    "i18n": {
+      "fr": "/a-propos",
+    },
+    "locale": "fr",
     "path": "/fr/a-propos",
   },
 ]
@@ -269,16 +437,28 @@ exports[`Page components > dynamic route 1`] = `
 [
   {
     "children": [],
+    "i18n": {
+      "en": "/articles/:name()",
+    },
+    "locale": "en",
     "name": "articles-name___en",
     "path": "/articles/:name()",
   },
   {
     "children": [],
+    "i18n": {
+      "ja": "/%E8%A8%98%E4%BA%8B/:name()",
+    },
+    "locale": "ja",
     "name": "articles-name___ja",
     "path": "/ja/%E8%A8%98%E4%BA%8B/:name()",
   },
   {
     "children": [],
+    "i18n": {
+      "fr": "/articles/:name()",
+    },
+    "locale": "fr",
     "name": "articles-name___fr",
     "path": "/fr/articles/:name()",
   },
@@ -289,14 +469,26 @@ exports[`Page components > simple 1`] = `
 [
   {
     "children": [],
+    "i18n": {
+      "en": "/about-us",
+    },
+    "locale": "en",
     "path": "/about-us",
   },
   {
     "children": [],
+    "i18n": {
+      "ja": "/about-ja",
+    },
+    "locale": "ja",
     "path": "/ja/about-ja",
   },
   {
     "children": [],
+    "i18n": {
+      "fr": "/a-propos",
+    },
+    "locale": "fr",
     "path": "/fr/a-propos",
   },
 ]
@@ -306,14 +498,26 @@ exports[`Page components > with definePageMeta 1`] = `
 [
   {
     "children": [],
+    "i18n": {
+      "en": "/about-us",
+    },
+    "locale": "en",
     "path": "/about-us",
   },
   {
     "children": [],
+    "i18n": {
+      "ja": "/about-ja",
+    },
+    "locale": "ja",
     "path": "/ja/about-ja",
   },
   {
     "children": [],
+    "i18n": {
+      "fr": "/a-propos",
+    },
+    "locale": "fr",
     "path": "/fr/a-propos",
   },
 ]
