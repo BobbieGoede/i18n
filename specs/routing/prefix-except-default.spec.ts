@@ -5,12 +5,15 @@ import { setup } from '../utils'
 import { localePathTests } from './routing-tests'
 
 await setup({
-  rootDir: fileURLToPath(new URL(`../fixtures/routing`, import.meta.url)),
+  rootDir: fileURLToPath(new URL(`../fixtures/basic`, import.meta.url)),
   browser: true,
   // overrides
   nuxtConfig: {
+    extends: [fileURLToPath(new URL(`../fixtures/helpers/layer-path-match-page`, import.meta.url))],
     i18n: {
-      strategy: STRATEGIES.PREFIX_EXCEPT_DEFAULT
+      strategy: STRATEGIES.PREFIX_EXCEPT_DEFAULT,
+      locales: ['en', 'ja'],
+      defaultLocale: ''
     }
   }
 })
