@@ -25,8 +25,7 @@ import type { Locale } from 'vue-i18n'
 import type {
   RouteLocationAsPathI18n,
   RouteLocationAsRelativeI18n,
-  RouteLocationAsStringI18n,
-  RouteLocationNormalizedLoaded,
+  // RouteLocationAsStringI18n,
   RouteLocationResolvedI18n,
   RouteMapI18n
 } from 'vue-router'
@@ -200,7 +199,18 @@ export function useLocaleHead({
  *
  * @public
  */
-export type RouteBaseNameFunction = (givenRoute?: RouteLocationNormalizedLoaded) => string | undefined
+export type RouteBaseNameFunction = <Name extends keyof RouteMapI18n = keyof RouteMapI18n>(
+  givenRoute:
+    | Name
+    /**
+     * Note: disabled route path string autocompletion, this can break depending on `strategy`
+     * this can be enabled again after route resolve has been improved.
+     */
+    // | RouteLocationAsStringI18n
+    | RouteLocationAsRelativeI18n
+    | RouteLocationAsPathI18n,
+  locale?: Locale
+) => string
 
 /**
  * The `useRouteBaseName` composable returns a function which returns the route base name.
@@ -213,6 +223,7 @@ export type RouteBaseNameFunction = (givenRoute?: RouteLocationNormalizedLoaded)
  * @public
  */
 export function useRouteBaseName(): RouteBaseNameFunction {
+  // @ts-expect-error - generated types conflict with the generic types we accept
   return wrapComposable(getRouteBaseName)
 }
 
@@ -239,7 +250,7 @@ export type LocalePathFunction = <Name extends keyof RouteMapI18n = keyof RouteM
      * Note: disabled route path string autocompletion, this can break depending on `strategy`
      * this can be enabled again after route resolve has been improved.
      */
-    | RouteLocationAsStringI18n
+    // | RouteLocationAsStringI18n
     | RouteLocationAsRelativeI18n
     | RouteLocationAsPathI18n,
   locale?: Locale
@@ -282,7 +293,7 @@ export type LocaleRouteFunction = <Name extends keyof RouteMapI18n = keyof Route
      * Note: disabled route path string autocompletion, this can break depending on `strategy`
      * this can be enabled again after route resolve has been improved.
      */
-    | RouteLocationAsStringI18n
+    // | RouteLocationAsStringI18n
     | RouteLocationAsRelativeI18n
     | RouteLocationAsPathI18n,
   locale?: Locale
@@ -324,7 +335,7 @@ export type LocaleLocationFunction = <Name extends keyof RouteMapI18n = keyof Ro
      * Note: disabled route path string autocompletion, this can break depending on `strategy`
      * this can be enabled again after route resolve has been improved.
      */
-    | RouteLocationAsStringI18n
+    // | RouteLocationAsStringI18n
     | RouteLocationAsRelativeI18n
     | RouteLocationAsPathI18n,
   locale?: Locale

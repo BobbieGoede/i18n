@@ -71,7 +71,6 @@ export function getRouteBaseName(common: CommonComposableOptions, givenRoute?: R
  *
  * @public
  */
-
 export function localePath(
   common: CommonComposableOptions,
   route: RouteLocationRaw,

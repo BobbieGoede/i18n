@@ -160,7 +160,7 @@ export type NuxtI18nOptions<
    *
    * @defaultValue []
    */
-  locales?: ConfiguredLocaleType | string[]
+  locales?: ConfiguredLocaleType
   /**
    * Routes strategy
    *
