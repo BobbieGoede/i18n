@@ -67,10 +67,10 @@ export interface RootRedirectOptions {
   statusCode: number
 }
 
-type RouteLocationAsStringTypedListI18n<RouteMap extends RouteMapGeneric = RouteMapGeneric> = {
-  [N in keyof RouteMap]?: Partial<Record<Locale, `/${string}` | boolean>> | boolean
+type RouteLocationAsStringTypedListI18n<T = RouteMapGeneric extends RouteMapI18n ? RouteMapGeneric : RouteMapI18n> = {
+  [N in keyof T]?: Partial<Record<Locale, `/${string}` | false>> | false
 }
-export type CustomRoutePages = RouteLocationAsStringTypedListI18n<RouteMapI18n>
+export type CustomRoutePages = RouteLocationAsStringTypedListI18n
 
 export interface ExperimentalFeatures {
   localeDetector?: string

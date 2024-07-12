@@ -228,7 +228,6 @@ export function getRouteOptionsResolver(
   ctx: NuxtPageAnalyzeContext,
   options: Pick<Required<NuxtI18nOptions>, 'pages' | 'defaultLocale' | 'customRoutes'>
 ): RouteOptionsResolver {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const { pages, defaultLocale, customRoutes } = options
 
   const useConfig = customRoutes === 'config'
@@ -276,7 +275,6 @@ function getRouteOptionsFromPages(
     return options
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
   const pageOptions = pageMeta.path ? pages[pageMeta.path] : undefined
 
   // routing disabled
@@ -290,12 +288,10 @@ function getRouteOptionsFromPages(
   }
 
   // remove disabled locales from page options
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   options.locales = options.locales.filter(locale => pageOptions[locale] !== false)
 
   // construct paths object
   for (const locale of options.locales) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const customLocalePath = pageOptions[locale]
     if (isString(customLocalePath)) {
       // set custom path if any
@@ -303,7 +299,6 @@ function getRouteOptionsFromPages(
       continue
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const customDefaultLocalePath = pageOptions[defaultLocale]
     if (isString(customDefaultLocalePath)) {
       // set default locale's custom path if any

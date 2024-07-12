@@ -14,13 +14,16 @@ declare module '#app' {
   }
 }
 
+// This needs to be generated, or else `RouteMapI18n` will fall back to `RouteMapGeneric`
+// declare module 'vue-router' {
+//   import type { RouteNamedMapI18n } from 'vue-router/auto-routes'
+
+//   export interface TypesConfig {
+//     RouteNamedMapI18n: RouteNamedMapI18n
+//   }
+// }
+
 declare module 'vue-router' {
-  import type { RouteNamedMapI18n } from 'vue-router/auto-routes'
-
-  export interface TypesConfig {
-    RouteNamedMapI18n: RouteNamedMapI18n
-  }
-
   export type RouteMapI18n =
     TypesConfig extends Record<'RouteNamedMapI18n', infer RouteNamedMap> ? RouteNamedMap : RouteMapGeneric
 
