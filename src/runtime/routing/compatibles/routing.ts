@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { isString, assign, isSymbol, isNumber } from '@intlify/shared'
+import { isString, assign } from '@intlify/shared'
 import { hasProtocol, parsePath, parseQuery, withTrailingSlash, withoutTrailingSlash } from 'ufo'
 import { DEFAULT_DYNAMIC_PARAMS_KEY } from '#build/i18n.options.mjs'
 import { unref } from '#imports'
@@ -138,16 +138,15 @@ export function resolveRoute(common: CommonComposableOptions, route: RouteLocati
   const prefixable = extendPrefixable(common.runtimeConfig)
   // if route parameter is a string, check if it's a path or name of route.
   let _route: RouteLocationPathRaw | RouteLocationNamedRaw
-  if (isString(route) || isSymbol(route) || isNumber(route)) {
-    const routeString = String(route)
-    if (routeString[0] === '/') {
+  if (isString(route)) {
+    if (route[0] === '/') {
       // if route parameter is a path, create route object with path.
-      const { pathname: path, search, hash } = parsePath(routeString)
+      const { pathname: path, search, hash } = parsePath(route)
       const query = parseQuery(search)
       _route = { path, query, hash }
     } else {
       // else use it as route name.
-      _route = { name: routeString }
+      _route = { name: route }
     }
   } else {
     _route = route
