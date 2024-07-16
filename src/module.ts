@@ -1,4 +1,6 @@
 import createDebug from 'debug'
+import { deepCopy } from '@intlify/shared'
+import { createJiti } from 'jiti'
 import {
   defineNuxtModule,
   isNuxt2,
@@ -9,7 +11,8 @@ import {
   addTemplate,
   addTypeTemplate,
   addImports,
-  useLogger
+  useLogger,
+  updateTemplates
 } from '@nuxt/kit'
 import { resolve, relative } from 'pathe'
 import { defu } from 'defu'
@@ -34,15 +37,22 @@ import {
   mergeI18nModules,
   applyOptionOverrides,
   getLocaleFiles,
-  filterLocales
+  filterLocales,
+  readFile
 } from './utils'
 import { distDir, runtimeDir } from './dirs'
 import { applyLayerOptions, checkLayerOptions, resolveLayerVueI18nConfigInfo } from './layers'
 import { generateTemplateNuxtI18nOptions } from './template'
 
 import type { HookResult } from '@nuxt/schema'
-import type { LocaleObject, NuxtI18nOptions } from './types'
+import type { LocaleObject, NuxtI18nOptions, LocaleInfo } from './types'
 import type { Locale } from 'vue-i18n'
+
+const PARSERS = {
+  '.yaml': () => import('confbox/yaml').then(r => r.parseYAML),
+  '.yml': () => import('confbox/yaml').then(r => r.parseYAML),
+  '.json5': () => import('confbox/json5').then(r => r.parseJSON5)
+} as const
 
 export * from './types'
 
@@ -252,6 +262,154 @@ export default defineNuxtModule<NuxtI18nOptions>({
       filename: NUXT_I18N_TEMPLATE_OPTIONS_KEY,
       write: true,
       getContents: () => genTemplate(false)
+    })
+
+    function generateInterface(obj: Record<string, unknown>, indentLevel = 1) {
+      const indent = '  '.repeat(indentLevel)
+      let interfaceString = ''
+
+      for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+            interfaceString += `${indent}${key}: {\n`
+            interfaceString += generateInterface(obj[key] as Record<string, unknown>, indentLevel + 1)
+            interfaceString += `${indent}};\n`
+          } else {
+            const propertyType = Array.isArray(obj[key]) ? 'unknown[]' : typeof obj[key]
+            interfaceString += `${indent}${key}: ${propertyType};\n`
+          }
+        }
+      }
+      return interfaceString
+    }
+
+    // function getAllKeys(obj: Record<string, unknown>, parentKey = '', result: string[] = []) {
+    //   for (const key in obj) {
+    //     if (Object.prototype.hasOwnProperty.call(obj, key)) {
+    //       const fullKey = parentKey ? `${parentKey}.${key}` : key
+    //       if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+    //         getAllKeys(obj[key] as Record<string, unknown>, fullKey, result)
+    //       } else {
+    //         result.push(fullKey)
+    //       }
+    //     }
+    //   }
+    //   return result
+    // }
+
+    nuxt.options._i18n = { locales: localeInfo }
+
+    const jsonRE = /.json5?$/
+    const json5RE = /.json5$/
+    const yamlRE = /.ya?ml$/
+
+    const jiti = createJiti(nuxt.options.rootDir, {
+      interopDefault: true,
+      moduleCache: false,
+      fsCache: false,
+      requireCache: false,
+      extensions: ['.js', '.ts', '.mjs', '.cjs', '.mts', '.cts', '.json']
+    })
+    addTypeTemplate({
+      filename: 'types/i18n-messages.d.ts',
+      getContents: async ({ nuxt }) => {
+        const messages = {}
+
+        // @ts-ignore
+        globalThis.defineI18nLocale = l => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+          return l
+        }
+
+        for (const l of nuxt.options._i18n?.locales ?? []) {
+          for (const f of l.files) {
+            const resolvedPath = resolve(nuxt.options.srcDir, f.path)
+            const contents = await readFile(resolvedPath)
+
+            // handle dynamic locale files
+            if (/.(j|t)s$/.test(resolvedPath)) {
+              try {
+                const imported = await jiti.import(resolvedPath, { try: true })
+
+                try {
+                  const transformed = jiti.transform({ source: contents, ts: true, async: true })
+                  const evaluated = await jiti.evalModule(transformed, { filename: resolvedPath })
+
+                  const res = (typeof evaluated === 'function' ? await evaluated() : evaluated) as unknown
+                  if (typeof res === 'object') {
+                    deepCopy(res, messages)
+                  }
+                } catch (err) {
+                  console.log(err)
+                }
+
+                if (typeof imported === 'function') {
+                  const res = (await imported(l.code)) as unknown
+                  if (typeof res === 'object') {
+                    deepCopy(res, messages)
+                  }
+                }
+              } catch (_err: unknown) {
+                // console.log(err)
+              }
+              continue
+            }
+
+            // handle json and json5
+            if (jsonRE.test(resolvedPath)) {
+              const parse = await PARSERS['.json5']()
+              const parsed = json5RE.test(resolvedPath) ? parse(contents) : (JSON.parse(contents) as unknown)
+
+              if (typeof parsed === 'object') {
+                deepCopy(parsed, messages)
+              }
+              continue
+            }
+
+            // handle yaml
+            if (yamlRE.test(resolvedPath)) {
+              const contents = await readFile(resolvedPath)
+              const parse = await PARSERS['.yaml']()
+              const parsed = parse(contents)
+
+              if (typeof parsed === 'object') {
+                deepCopy(parsed, messages)
+              }
+              continue
+            }
+          }
+
+          // we could only check one locale's files (serving as master/template) for speed
+          // break
+        }
+
+        const interfaceContent = generateInterface(messages, 2).trim()
+        return `// generated by @nuxtjs/i18n
+
+interface GeneratedLocaleMessage {
+  ${interfaceContent}
+}
+
+declare module 'vue-i18n' {
+  export interface DefineLocaleMessage extends GeneratedLocaleMessage {}
+}
+
+import { DefineCoreLocaleMessage } from '@intlify/core'
+
+declare module '@intlify/core' {
+  export interface DefineCoreLocaleMessage extends GeneratedLocaleMessage {}
+}
+
+export {}`
+      }
+    })
+
+    // watch locale files for changes and update template
+    nuxt.hook('builder:watch', async (_, path) => {
+      const paths = nuxt.options._i18n.locales.flatMap(x => x.files.map(f => f.path))
+      if (!paths.includes(path)) return
+
+      await updateTemplates({ filter: template => template.filename === 'types/i18n-messages.d.ts' })
     })
 
     /**
@@ -478,6 +636,12 @@ declare module '@nuxt/schema' {
   }
   interface NuxtOptions {
     ['i18n']?: UserNuxtI18nOptions
+    /**
+     * @internal
+     */
+    _i18n: {
+      locales: LocaleInfo[]
+    }
   }
   interface NuxtHooks extends ModuleHooks {}
   interface PublicRuntimeConfig extends ModulePublicRuntimeConfig {}
