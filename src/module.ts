@@ -48,7 +48,7 @@ export * from './types'
 
 const debug = createDebug('@nuxtjs/i18n:module')
 
-export default defineNuxtModule<NuxtI18nOptions>({
+export default defineNuxtModule<Omit<NuxtI18nOptions, 'locales'> & { locales?: string[] | LocaleObject<string>[] }>({
   meta: {
     name: NUXT_I18N_MODULE_ID,
     configKey: 'i18n',
@@ -184,7 +184,7 @@ export default defineNuxtModule<NuxtI18nOptions>({
      */
 
     if (options.strategy !== 'no_prefix' && localeCodes.length) {
-      setupPages(options, nuxt)
+      await setupPages(options, nuxt)
     }
 
     /**

@@ -3,6 +3,7 @@ import type { ParsedPath } from 'path'
 import type { PluginOptions } from '@intlify/unplugin-vue-i18n'
 import type { NuxtPage } from '@nuxt/schema'
 import type { STRATEGIES } from './constants'
+import type { RouteMapGeneric, RouteMapI18n } from 'vue-router'
 
 export type RedirectOnOptions = 'all' | 'root' | 'no prefix'
 
@@ -66,13 +67,10 @@ export interface RootRedirectOptions {
   statusCode: number
 }
 
-export type CustomRoutePages = {
-  [key: string]:
-    | false
-    | {
-        [key: string]: false | string
-      }
+type RouteLocationAsStringTypedListI18n<T = RouteMapGeneric extends RouteMapI18n ? RouteMapGeneric : RouteMapI18n> = {
+  [N in keyof T]?: Partial<Record<Locale, `/${string}` | false>> | false
 }
+export type CustomRoutePages = RouteLocationAsStringTypedListI18n
 
 export interface ExperimentalFeatures {
   localeDetector?: string
