@@ -4,16 +4,37 @@ import { createJiti } from 'jiti'
 import { addTypeTemplate, updateTemplates } from '@nuxt/kit'
 import { deepCopy } from '@intlify/shared'
 import { readFile } from './utils'
-import { resolve } from 'pathe'
+import { extname, resolve } from 'pathe'
 
 import type { I18nOptions } from 'vue-i18n'
 import type { NumberFormatOptions } from '@intlify/core'
 
+// https://github.com/unjs/c12/blob/main/src/loader.ts#L26
 const PARSERS = {
   '.yaml': () => import('confbox/yaml').then(r => r.parseYAML),
   '.yml': () => import('confbox/yaml').then(r => r.parseYAML),
-  '.json5': () => import('confbox/json5').then(r => r.parseJSON5)
+  '.jsonc': () => import('confbox/jsonc').then(r => r.parseJSONC),
+  '.json5': () => import('confbox/json5').then(r => r.parseJSON5),
+  '.toml': () => import('confbox/toml').then(r => r.parseTOML),
+  '.json': () => JSON.parse
 } as const
+
+const SUPPORTED_EXTENSIONS = [
+  // with jiti
+  '.js',
+  '.ts',
+  '.mjs',
+  '.cjs',
+  '.mts',
+  '.cts',
+  '.json',
+  // with confbox
+  '.jsonc',
+  '.json5',
+  '.yaml',
+  '.yml',
+  '.toml'
+] as const
 
 export function enableVueI18nTypeGeneration(
   nuxt: Nuxt,
@@ -26,7 +47,7 @@ export function enableVueI18nTypeGeneration(
     moduleCache: false,
     fsCache: false,
     requireCache: false,
-    extensions: ['.js', '.ts', '.mjs', '.cjs', '.mts', '.cts', '.json']
+    extensions: [...SUPPORTED_EXTENSIONS]
   })
 
   function generateInterface(obj: Record<string, unknown>, indentLevel = 1) {
@@ -53,9 +74,9 @@ export function enableVueI18nTypeGeneration(
 
   nuxt.options._i18n = { locales: localeInfo }
 
-  const jsonRE = /.json5?$/
-  const json5RE = /.json5$/
-  const yamlRE = /.ya?ml$/
+  // const jsonRE = /.json5?$/
+  // const json5RE = /.json5$/
+  // const yamlRE = /.ya?ml$/
 
   addTypeTemplate({
     filename: 'types/i18n-messages.d.ts',
@@ -79,11 +100,33 @@ export function enableVueI18nTypeGeneration(
       // @ts-ignore
       globalThis.useRuntimeConfig = () => nuxt.options.runtimeConfig
 
-      for (const cfg of vueI18nConfigPaths) {
-        const imported = await jiti.import(cfg.absolute, { try: true })
-        if (typeof imported !== 'function') continue
+      async function loadTarget(absPath: string, args: unknown[] = []) {
+        try {
+          const configFileExt = extname(absPath) || ''
+          let result
+          const contents = await readFile(absPath)
+          if (configFileExt in PARSERS) {
+            const asyncLoader = await PARSERS[configFileExt as keyof typeof PARSERS]()
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            result = asyncLoader(contents)
+          } else {
+            result = await jiti.import(absPath)
+          }
 
-        const res = (await imported()) as I18nOptions | undefined
+          if (result instanceof Function) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+            return (await result.call(undefined, ...args)) as unknown
+          }
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+          return result
+        } catch (err) {
+          console.log(err)
+          return undefined
+        }
+      }
+
+      for (const cfg of vueI18nConfigPaths) {
+        const res = (await loadTarget(cfg.absolute)) as I18nOptions | undefined
 
         if (res == null) continue
         for (const v of Object.values(res.messages ?? [])) {
@@ -102,58 +145,13 @@ export function enableVueI18nTypeGeneration(
       for (const l of nuxt.options._i18n?.locales ?? []) {
         for (const f of l.files) {
           const resolvedPath = resolve(nuxt.options.srcDir, f.path)
-          const contents = await readFile(resolvedPath)
-
-          // handle dynamic locale files
-          if (/.(j|t)s$/.test(resolvedPath)) {
-            try {
-              const imported = await jiti.import(resolvedPath, { try: true })
-
-              try {
-                const transformed = jiti.transform({ source: contents, ts: true, async: true })
-                const evaluated = await jiti.evalModule(transformed, { filename: resolvedPath })
-
-                const res = (typeof evaluated === 'function' ? await evaluated() : evaluated) as unknown
-                if (typeof res === 'object') {
-                  deepCopy(res, messages)
-                }
-              } catch (_err) {
-                // console.log(err)
-              }
-
-              if (typeof imported === 'function') {
-                const res = (await imported(l.code)) as unknown
-                if (typeof res === 'object') {
-                  deepCopy(res, messages)
-                }
-              }
-            } catch (_err: unknown) {
-              // console.log(err)
-            }
-            continue
-          }
-
-          // handle json and json5
-          if (jsonRE.test(resolvedPath)) {
-            const parse = await PARSERS['.json5']()
-            const parsed = json5RE.test(resolvedPath) ? parse(contents) : (JSON.parse(contents) as unknown)
-
-            if (typeof parsed === 'object') {
-              deepCopy(parsed, messages)
-            }
-            continue
-          }
-
-          // handle yaml
-          if (yamlRE.test(resolvedPath)) {
-            const contents = await readFile(resolvedPath)
-            const parse = await PARSERS['.yaml']()
-            const parsed = parse(contents)
-
-            if (typeof parsed === 'object') {
-              deepCopy(parsed, messages)
-            }
-            continue
+          // console.log(resolvedPath, f.path)
+          // const contents = await readFile(resolvedPath)
+          // console.log(resolvedPath, await loadTarget(resolvedPath, [l.code]))
+          try {
+            deepCopy((await loadTarget(resolvedPath, [l.code])) ?? {}, messages)
+          } catch (err) {
+            console.log(err)
           }
         }
 
