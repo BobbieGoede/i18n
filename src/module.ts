@@ -41,8 +41,9 @@ import { applyLayerOptions, checkLayerOptions, resolveLayerVueI18nConfigInfo } f
 import { generateTemplateNuxtI18nOptions } from './template'
 
 import type { HookResult } from '@nuxt/schema'
-import type { LocaleObject, NuxtI18nOptions } from './types'
+import type { LocaleObject, NuxtI18nOptions, LocaleInfo } from './types'
 import type { Locale } from 'vue-i18n'
+import { enableVueI18nTypeGeneration } from './type-generation'
 
 export * from './types'
 
@@ -254,6 +255,7 @@ export default defineNuxtModule<NuxtI18nOptions>({
       getContents: () => genTemplate(false)
     })
 
+    enableVueI18nTypeGeneration(nuxt, options, localeInfo, vueI18nConfigPaths)
     /**
      * `PageMeta` augmentation to add `nuxtI18n` property
      * TODO: Remove in v9, `useSetI18nParams` should be used instead
@@ -478,6 +480,12 @@ declare module '@nuxt/schema' {
   }
   interface NuxtOptions {
     ['i18n']?: UserNuxtI18nOptions
+    /**
+     * @internal
+     */
+    _i18n: {
+      locales: LocaleInfo[]
+    }
   }
   interface NuxtHooks extends ModuleHooks {}
   interface PublicRuntimeConfig extends ModulePublicRuntimeConfig {}
