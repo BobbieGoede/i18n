@@ -109,6 +109,8 @@ export type NuxtI18nOptions<
    */
   vueI18n?: string
   experimental?: ExperimentalFeatures
+  restructure?: boolean
+  rootDir?: string
   bundle?: BundleOptions
   compilation?: LocaleMessageCompilationOptions
   customBlocks?: CustomBlocksOptions
@@ -141,7 +143,6 @@ export type NuxtI18nOptions<
   skipSettingLocaleOnNavigate?: boolean
   types?: 'composition' | 'legacy'
   debug?: boolean
-  dynamicRouteParams?: boolean
   parallelPlugin?: boolean
   /**
    * The app's default locale
