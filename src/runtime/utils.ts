@@ -2,17 +2,7 @@
 import { joinURL, isEqual } from 'ufo'
 import { isString, isFunction, isObject } from '@intlify/shared'
 import { navigateTo, useNuxtApp, useRouter, useRuntimeConfig, useState } from '#imports'
-import {
-  NUXT_I18N_MODULE_ID,
-  isSSG,
-  localeLoaders,
-  normalizedLocales,
-  type RootRedirectOptions,
-  type PrefixableOptions,
-  type SwitchLocalePathIntercepter,
-  type BaseUrlResolveHandler,
-  type LocaleObject
-} from '#build/i18n.options.mjs'
+import { NUXT_I18N_MODULE_ID, isSSG, localeLoaders, normalizedLocales } from '#build/i18n.options.mjs'
 import {
   wrapComposable,
   detectBrowserLanguage,
@@ -47,6 +37,13 @@ import { createLocaleFromRouteGetter, type GetLocaleFromRouteFunction } from './
 import type { RouteLocationNormalized, RouteLocationNormalizedLoaded } from 'vue-router'
 import type { RuntimeConfig } from '@nuxt/schema'
 import type { ModulePublicRuntimeConfig } from '../module'
+import type {
+  PrefixableOptions,
+  SwitchLocalePathIntercepter,
+  BaseUrlResolveHandler,
+  LocaleObject,
+  RootRedirectOptions
+} from '../types'
 
 export function _setLocale(i18n: I18n, locale: Locale): ReturnType<typeof callVueI18nInterfaces> {
   return callVueI18nInterfaces(i18n, 'setLocale', locale)
@@ -96,6 +93,10 @@ export async function finalizePendingLocaleChange(i18n: I18n): Promise<ReturnTyp
   return callVueI18nInterfaces(i18n, 'finalizePendingLocaleChange')
 }
 
+export type RuntimeConfigWithI18n = Omit<RuntimeConfig, 'public'> & {
+  public: { i18n: ModulePublicRuntimeConfig['i18n'] }
+}
+
 /**
  * Common options used internally by composable functions, these
  * are initialized when calling a wrapped composable function.
@@ -105,14 +106,14 @@ export async function finalizePendingLocaleChange(i18n: I18n): Promise<ReturnTyp
 export type CommonComposableOptions = {
   router: Router
   i18n: I18n
-  runtimeConfig: RuntimeConfig
+  runtimeConfig: RuntimeConfigWithI18n
   metaState: Ref<Record<Locale, any>>
 }
 export function initCommonComposableOptions(i18n?: I18n): CommonComposableOptions {
   return {
-    i18n: i18n ?? (useNuxtApp().$i18n as I18n),
+    i18n: i18n ?? (useNuxtApp().$i18n as unknown as I18n),
     router: useRouter(),
-    runtimeConfig: useRuntimeConfig(),
+    runtimeConfig: useRuntimeConfig() as RuntimeConfigWithI18n,
     metaState: useState<Record<Locale, any>>('nuxt-i18n-meta', () => ({}))
   }
 }
@@ -350,7 +351,7 @@ export async function navigate(
 ) {
   const { nuxtApp, i18n, locale, route } = args
   const { rootRedirect, differentDomains, multiDomainLocales, skipSettingLocaleOnNavigate, configLocales, strategy } =
-    nuxtApp.$config.public.i18n
+    nuxtApp.$config.public.i18n as ModulePublicRuntimeConfig['i18n']
   let { redirectPath } = args
 
   __DEBUG__ &&
@@ -480,7 +481,7 @@ export function extendSwitchLocalePathIntercepter(runtimeConfig = useRuntimeConf
 export function extendBaseUrl(): BaseUrlResolveHandler<NuxtApp> {
   return (): string => {
     const ctx = useNuxtApp()
-    const { baseUrl, defaultLocale, differentDomains } = ctx.$config.public.i18n
+    const { baseUrl, defaultLocale, differentDomains } = ctx.$config.public.i18n as ModulePublicRuntimeConfig['i18n']
 
     if (isFunction(baseUrl)) {
       const baseUrlResult = baseUrl(ctx)
@@ -502,7 +503,7 @@ export function extendBaseUrl(): BaseUrlResolveHandler<NuxtApp> {
       return baseUrl
     }
 
-    return baseUrl!
+    return baseUrl as string
   }
 }
 

@@ -3,7 +3,7 @@
 import { isString, isSymbol, isFunction } from '@intlify/shared'
 import { isRef, unref } from '#imports'
 
-import type { LocaleObject, Strategies, BaseUrlResolveHandler } from '#build/i18n.options.mjs'
+import type { LocaleObject, Strategies, BaseUrlResolveHandler } from '#i18n/types'
 import type { Composer, I18n, Locale, VueI18n } from 'vue-i18n'
 
 export const inBrowser = typeof window !== 'undefined'

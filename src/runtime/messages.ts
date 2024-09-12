@@ -3,7 +3,7 @@ import { deepCopy, isFunction, isArray, isObject, isString } from '@intlify/shar
 import type { I18nOptions, Locale, FallbackLocale, LocaleMessages, DefineLocaleMessage } from 'vue-i18n'
 import type { NuxtApp } from '#app'
 import type { DeepRequired } from 'ts-essentials'
-import type { VueI18nConfig, NuxtI18nOptions } from '../types'
+import type { VueI18nConfig, NuxtI18nOptions } from '#i18n/types'
 import type { CoreContext } from '@intlify/h3'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

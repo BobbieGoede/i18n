@@ -8,7 +8,7 @@ import { resolve, routeToObject } from './utils'
 import { getLocale, getLocaleRouteName, getRouteName } from '../utils'
 import { extendPrefixable, extendSwitchLocalePathIntercepter, type CommonComposableOptions } from '../../utils'
 
-import type { Strategies, PrefixableOptions, SwitchLocalePathIntercepter } from '#build/i18n.options.mjs'
+import type { Strategies, PrefixableOptions, SwitchLocalePathIntercepter } from '#i18n/types'
 import type { Locale } from 'vue-i18n'
 import type {
   RouteLocation,
@@ -19,6 +19,7 @@ import type {
   RouteLocationNormalizedLoaded,
   RouteLocationNormalized
 } from 'vue-router'
+import type { RuntimeConfig } from '@nuxt/schema'
 
 const RESOLVED_PREFIXED = new Set<Strategies>(['prefix_and_default', 'prefix_except_default'])
 
@@ -132,7 +133,7 @@ export function resolveRoute(common: CommonComposableOptions, route: RouteLocati
   const { router, i18n } = common
   const _locale = locale || getLocale(i18n)
   const { defaultLocale, strategy, trailingSlash } = common.runtimeConfig.public.i18n
-  const prefixable = extendPrefixable(common.runtimeConfig)
+  const prefixable = extendPrefixable(common.runtimeConfig as RuntimeConfig)
   // if route parameter is a string, check if it's a path or name of route.
   let _route: RouteLocationPathRaw | RouteLocationNamedRaw
   if (isString(route)) {
@@ -241,7 +242,7 @@ export function switchLocalePath(
     return ''
   }
 
-  const switchLocalePathIntercepter = extendSwitchLocalePathIntercepter(common.runtimeConfig)
+  const switchLocalePathIntercepter = extendSwitchLocalePathIntercepter(common.runtimeConfig as RuntimeConfig)
   const routeCopy = routeToObject(route)
   const resolvedParams = getLocalizableMetaFromDynamicParams(common, route)[locale]
 

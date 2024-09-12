@@ -1,6 +1,6 @@
 import type { NuxtApp } from '#app'
 import type { ComputedRef } from 'vue'
-import type { Directions, LocaleObject, Strategies } from '../types'
+import type { Directions, LocaleObject, Strategies } from '#i18n/types'
 import type { Locale } from 'vue-i18n'
 
 /**

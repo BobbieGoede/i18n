@@ -23,7 +23,7 @@ import type {
   VueI18n,
   VueI18nExtender
 } from 'vue-i18n'
-import type { LocaleObject, NuxtI18nOptions } from '#build/i18n.options.mjs'
+import type { LocaleObject, NuxtI18nOptions } from '#i18n/types'
 
 /**
  * An options of Vue I18n Routing Plugin

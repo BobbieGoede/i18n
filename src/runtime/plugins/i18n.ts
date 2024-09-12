@@ -14,8 +14,7 @@ import {
   isSSG,
   localeLoaders,
   parallelPlugin,
-  normalizedLocales,
-  type LocaleObject
+  normalizedLocales
 } from '#build/i18n.options.mjs'
 import { loadVueI18nOptions, loadInitialMessages, loadLocale } from '../messages'
 import {
@@ -51,6 +50,8 @@ import type {
   RouteBaseNameFunction,
   SwitchLocalePathFunction
 } from '../composables'
+import type { LocaleObject } from '#i18n/types'
+import type { ModulePublicRuntimeConfig } from '../../module'
 
 export default defineNuxtPlugin({
   name: 'i18n:plugin',
@@ -60,7 +61,8 @@ export default defineNuxtPlugin({
     const { vueApp: app } = nuxt
     const nuxtContext = nuxt as unknown as NuxtApp
     const host = getHost()
-    const { configLocales, defaultLocale, multiDomainLocales, strategy } = nuxtContext.$config.public.i18n
+    const { configLocales, defaultLocale, multiDomainLocales, strategy } = nuxtContext.$config.public
+      .i18n as ModulePublicRuntimeConfig['i18n']
 
     const hasDefaultForDomains = configLocales.some(
       (l): l is LocaleObject => typeof l !== 'string' && Array.isArray(l.defaultForDomains)
@@ -95,7 +97,10 @@ export default defineNuxtPlugin({
     }
 
     // Fresh copy per request to prevent reusing mutated options
-    const runtimeI18n = { ...nuxtContext.$config.public.i18n, defaultLocale: defaultLocaleDomain }
+    const runtimeI18n = {
+      ...nuxtContext.$config.public.i18n,
+      defaultLocale: defaultLocaleDomain
+    } as ModulePublicRuntimeConfig['i18n']
     // @ts-expect-error type incompatible
     runtimeI18n.baseUrl = extendBaseUrl()
 

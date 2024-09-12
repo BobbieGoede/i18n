@@ -9,7 +9,8 @@ import {
   addTemplate,
   addTypeTemplate,
   addImports,
-  useLogger
+  useLogger,
+  createResolver
 } from '@nuxt/kit'
 import { resolve, relative } from 'pathe'
 import { defu } from 'defu'
@@ -36,7 +37,7 @@ import {
   getLocaleFiles,
   filterLocales
 } from './utils'
-import { distDir, runtimeDir } from './dirs'
+import { runtimeDir } from './dirs'
 import { applyLayerOptions, checkLayerOptions, resolveLayerVueI18nConfigInfo } from './layers'
 import { generateTemplateNuxtI18nOptions } from './template'
 
@@ -59,6 +60,10 @@ export default defineNuxtModule<NuxtI18nOptions>({
   defaults: DEFAULT_OPTIONS,
   async setup(i18nOptions, nuxt) {
     const logger = useLogger(NUXT_I18N_MODULE_ID)
+
+    nuxt.hook('prepare:types', ({ references }) => {
+      references.push({ types: `${NUXT_I18N_MODULE_ID}/internals` })
+    })
 
     const options = i18nOptions as Required<NuxtI18nOptions>
     applyOptionOverrides(options, nuxt)
@@ -230,11 +235,13 @@ export default defineNuxtModule<NuxtI18nOptions>({
      */
 
     // for core plugin
-    addPlugin(resolve(runtimeDir, 'plugins/i18n'))
-    addPlugin(resolve(runtimeDir, 'plugins/switch-locale-path-ssr'))
+    const resolver = createResolver(import.meta.url)
+    addPlugin(resolver.resolve('./runtime/plugins/i18n'))
+    addPlugin(resolver.resolve('./runtime/plugins/switch-locale-path-ssr'))
 
     // for composables
-    nuxt.options.alias['#i18n'] = resolve(distDir, 'runtime/composables/index.js')
+    nuxt.options.alias['#i18n'] = resolver.resolve('./runtime/composables/index')
+    nuxt.options.alias['#i18n/types'] = resolver.resolve('./types')
     nuxt.options.build.transpile.push('#i18n')
 
     const genTemplate = (isServer: boolean, lazy?: boolean) => {
@@ -259,7 +266,8 @@ export default defineNuxtModule<NuxtI18nOptions>({
     }
 
     // @ts-expect-error type error
-    nuxt.options.runtimeConfig.public.i18n.configLocales = simplifyLocaleOptions(nuxt, defu({}, options))
+    ;(nuxt.options.runtimeConfig.public.i18n as ModulePublicRuntimeConfig['i18n']).configLocales =
+      simplifyLocaleOptions(nuxt, defu({}, options))
 
     addTemplate({
       filename: NUXT_I18N_TEMPLATE_OPTIONS_KEY,
@@ -380,6 +388,7 @@ export default defineNuxtModule<NuxtI18nOptions>({
 
 // Used by nuxt/module-builder for `types.d.ts` generation
 export interface ModuleOptions extends NuxtI18nOptions {}
+export interface ModuleRuntimeConfig {}
 
 export interface ModulePublicRuntimeConfig {
   i18n: {
@@ -490,7 +499,7 @@ declare module '@nuxt/schema' {
     ['i18n']?: Partial<ModuleOptions>
   }
   interface NuxtOptions {
-    ['i18n']?: ModuleOptions
+    ['i18n']: ModuleOptions
   }
   interface NuxtHooks extends ModuleHooks {}
   interface PublicRuntimeConfig extends ModulePublicRuntimeConfig {}

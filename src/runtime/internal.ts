@@ -16,7 +16,7 @@ import { findBrowserLocale, getI18nTarget, getLocalesRegex } from './routing/uti
 import { createLogger, initCommonComposableOptions, type CommonComposableOptions } from './utils'
 
 import type { Locale, I18n } from 'vue-i18n'
-import type { DetectBrowserLanguageOptions, LocaleObject } from '#build/i18n.options.mjs'
+import type { DetectBrowserLanguageOptions, LocaleObject } from '#i18n/types'
 import type { RouteLocationNormalized, RouteLocationNormalizedLoaded } from 'vue-router'
 import type { CookieRef } from 'nuxt/app'
 import type { ModulePublicRuntimeConfig } from '../module'
@@ -406,7 +406,7 @@ export function getDomainFromLocale(localeCode: Locale): string | undefined {
 }
 
 export const runtimeDetectBrowserLanguage = (
-  opts: ModulePublicRuntimeConfig['i18n'] = useRuntimeConfig().public.i18n
+  opts: ModulePublicRuntimeConfig['i18n'] = useRuntimeConfig().public.i18n as ModulePublicRuntimeConfig['i18n']
 ) => {
   if (opts?.detectBrowserLanguage === false) return false
 

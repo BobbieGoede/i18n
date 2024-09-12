@@ -22,7 +22,7 @@ import { findBrowserLocale, getComposer, getLocale, getLocales } from '../routin
 import type { Ref } from 'vue'
 import type { Locale } from 'vue-i18n'
 import type { RouteLocation, RouteLocationNormalizedLoaded, RouteLocationRaw, Router } from 'vue-router'
-import type { I18nHeadMetaInfo, I18nHeadOptions, SeoAttributesOptions } from '#build/i18n.options.mjs'
+import type { I18nHeadMetaInfo, I18nHeadOptions, SeoAttributesOptions } from '#i18n/types'
 import type { HeadParam } from '../utils'
 
 export * from 'vue-i18n'
