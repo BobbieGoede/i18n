@@ -24,5 +24,7 @@ export default defineNuxtConfig({
       autoImportTranslationFunctions: true
     }
     // debug: true,
-  }
+  },
+
+  compatibilityDate: '2024-11-19'
 })

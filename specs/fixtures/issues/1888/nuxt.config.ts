@@ -33,5 +33,7 @@ export default defineNuxtConfig({
       alwaysRedirect: true,
       redirectOn: 'root'
     }
-  }
+  },
+
+  compatibilityDate: '2024-11-19'
 })

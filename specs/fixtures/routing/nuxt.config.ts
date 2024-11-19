@@ -6,5 +6,7 @@ export default defineNuxtConfig({
     restructureDir: false,
     locales: ['en', 'ja'],
     detectBrowserLanguage: false
-  }
+  },
+
+  compatibilityDate: '2024-11-19'
 })

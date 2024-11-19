@@ -9,5 +9,7 @@ export default defineNuxtConfig({
     types: 'legacy',
     locales: ['en'],
     defaultLocale: 'en'
-  }
+  },
+
+  compatibilityDate: '2024-11-19'
 })

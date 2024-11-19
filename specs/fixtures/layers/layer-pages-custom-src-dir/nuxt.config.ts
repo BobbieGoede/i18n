@@ -9,5 +9,7 @@ export default defineNuxtConfig({
         fr: '/custom-layer-french/[slug]'
       }
     }
-  }
+  },
+
+  compatibilityDate: '2024-11-19'
 })

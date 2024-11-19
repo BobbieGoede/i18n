@@ -38,5 +38,7 @@ export default defineNuxtConfig({
         nl: '/layer-ouder/layer-kind'
       }
     }
-  }
+  },
+
+  compatibilityDate: '2024-11-19'
 })

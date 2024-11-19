@@ -42,5 +42,7 @@ export default defineNuxtConfig({
     detectBrowserLanguage: {
       useCookie: true
     }
-  }
+  },
+
+  compatibilityDate: '2024-11-19'
 })

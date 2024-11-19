@@ -12,5 +12,7 @@ export default defineNuxtConfig({
         dir: 'rtl'
       }
     ]
-  }
+  },
+
+  compatibilityDate: '2024-11-19'
 })

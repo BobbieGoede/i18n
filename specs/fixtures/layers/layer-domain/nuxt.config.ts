@@ -30,5 +30,7 @@ export default defineNuxtConfig({
         name: 'Japanese'
       }
     ]
-  }
+  },
+
+  compatibilityDate: '2024-11-19'
 })

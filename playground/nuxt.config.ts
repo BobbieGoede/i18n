@@ -28,7 +28,6 @@ export default defineNuxtConfig({
   },
 
   extends: ['layers/i18n-layer'],
-
   modules: [Module1, ModuleExperimental, LayerModule, '@nuxtjs/i18n', '@nuxt/devtools'],
 
   // debug: false,
@@ -99,5 +98,7 @@ export default defineNuxtConfig({
     //   // redirectOn: 'root'
     // },
     vueI18n: 'vue-i18n.options.ts'
-  }
+  },
+
+  compatibilityDate: '2024-11-19'
 })

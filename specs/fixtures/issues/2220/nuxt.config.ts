@@ -10,5 +10,7 @@ export default defineNuxtConfig({
     defaultLocale: 'en',
     detectBrowserLanguage: false,
     strategy: 'no_prefix'
-  }
+  },
+
+  compatibilityDate: '2024-11-19'
 })

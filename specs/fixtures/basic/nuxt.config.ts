@@ -26,5 +26,7 @@ export default defineNuxtConfig({
     // `false` will not be overwritten by `runtimeConfig` making this fixture less reusable
     detectBrowserLanguage: false,
     vueI18n: './config/i18n.config.ts'
-  }
+  },
+
+  compatibilityDate: '2024-11-19'
 })

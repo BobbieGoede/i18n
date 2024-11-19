@@ -7,5 +7,7 @@ export default defineNuxtConfig({
     defaultLocale: 'nl',
     detectBrowserLanguage: false,
     vueI18n: './i18n.config.ts'
-  }
+  },
+
+  compatibilityDate: '2024-11-19'
 })

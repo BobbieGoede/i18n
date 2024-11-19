@@ -27,5 +27,7 @@ export default defineNuxtConfig({
     defaultLocale: 'ar',
     lazy: true,
     langDir: 'i18n/'
-  }
+  },
+
+  compatibilityDate: '2024-11-19'
 })

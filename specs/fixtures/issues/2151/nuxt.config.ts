@@ -32,5 +32,7 @@ export default defineNuxtConfig({
       fallbackLocale: 'en',
       redirectOn: 'no prefix'
     }
-  }
+  },
+
+  compatibilityDate: '2024-11-19'
 })
