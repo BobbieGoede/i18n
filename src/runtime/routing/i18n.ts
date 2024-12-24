@@ -1,5 +1,5 @@
 import { effectScope } from '#imports'
-import { isVueI18n, getComposer } from '../../compatibility'
+import { getComposer } from '../compatibility'
 
 import type { NuxtApp } from 'nuxt/app'
 import type { Composer, ComposerExtender, ExportedGlobalComposer, I18n, VueI18n, VueI18nExtender } from 'vue-i18n'
@@ -8,13 +8,7 @@ import type { Composer, ComposerExtender, ExportedGlobalComposer, I18n, VueI18n,
  * Internal options for the Vue I18n plugin.
  */
 interface VueI18nInternalPluginOptions {
-  /**
-   * @internal
-   */
   __composerExtend?: ComposerExtender
-  /**
-   * @internal
-   */
   __vueI18nExtend?: VueI18nExtender
 }
 
@@ -56,7 +50,7 @@ export function extendI18n(i18n: I18n, { extendComposer, extendComposerInstance 
     // extend global
     scope.run(() => {
       extendComposer(globalComposer)
-      if (i18n.mode === 'legacy' && isVueI18n(i18n.global)) {
+      if (i18n.mode === 'legacy' && '__composer' in i18n.global) {
         extendComposerInstance(i18n.global, getComposer(i18n.global))
       }
     })

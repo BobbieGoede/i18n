@@ -2,23 +2,15 @@ import { joinURL } from 'ufo'
 import { isArray, isObject } from '@intlify/shared'
 import { unref, useNuxtApp, useRuntimeConfig } from '#imports'
 
-import { getNormalizedLocales } from '../utils'
+import { getNormalizedLocales } from './utils'
 import { getRouteBaseName, localeRoute, switchLocalePath } from './routing'
-import { getComposer } from '../../compatibility'
+import { getComposer } from '../compatibility'
 
-import type { I18n } from 'vue-i18n'
 import type { I18nHeadMetaInfo, MetaAttrs, LocaleObject, I18nHeadOptions } from '#internal-i18n-types'
-import type { CommonComposableOptions } from '../../utils'
+import type { CommonComposableOptions } from '../utils'
 
 /**
  * Returns localized head properties for locale-related aspects.
- *
- * @param common - Common options used internally by composable functions.
- * @param options - An options, see about details {@link I18nHeadOptions}.
- *
- * @returns The localized {@link I18nHeadMetaInfo | head properties}.
- *
- * @public
  */
 export function localeHead(
   common: CommonComposableOptions,
@@ -45,9 +37,7 @@ export function localeHead(
 
   const locale = unref(nuxtApp.$i18n.locale)
   const locales = unref(nuxtApp.$i18n.locales)
-  const currentLocale = getNormalizedLocales(locales).find(l => l.code === locale) || {
-    code: locale
-  }
+  const currentLocale: LocaleObject = getNormalizedLocales(locales).find(l => l.code === locale) || { code: locale }
   const currentLanguage = currentLocale.language
   const currentDir = currentLocale.dir || defaultDirection
 
@@ -61,7 +51,7 @@ export function localeHead(
   }
 
   // Adding SEO Meta
-  if (seo && locale && unref(nuxtApp.$i18n.locales)) {
+  if (seo && locale && locales) {
     metaObject.link.push(...getHreflangLinks(common, locales, key), ...getCanonicalLink(common, key, seo))
 
     metaObject.meta.push(
@@ -76,7 +66,7 @@ export function localeHead(
 
 function getBaseUrl() {
   const nuxtApp = useNuxtApp()
-  const i18n = getComposer(nuxtApp.$i18n as unknown as I18n)
+  const i18n = getComposer(nuxtApp.$i18n)
   return joinURL(unref(i18n.baseUrl), nuxtApp.$config.app.baseURL)
 }
 
