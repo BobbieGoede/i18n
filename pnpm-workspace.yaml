@@ -8,3 +8,8 @@ onlyBuiltDependencies:
 ignoredBuiltDependencies:
   - esbuild
   - vue-demi
+
+catalog:
+  nuxt: &nuxt ^3.16.2
+  '@nuxt/kit': *nuxt
+  '@nuxt/schema': *nuxt
