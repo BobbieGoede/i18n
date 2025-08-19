@@ -1,7 +1,7 @@
 import { addTemplate, updateTemplates } from '@nuxt/kit'
 import { readFileSync } from 'node:fs'
-import { isString } from '@intlify/shared'
-import { parse as parseSFC } from '@vue/compiler-sfc'
+import { isString, toTypeString } from '@intlify/shared'
+import { parse } from '@vue/compiler-sfc'
 import { parseAndWalk } from 'oxc-walker'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { getRoutePath, parseSegment } from './utils/route-parsing'
@@ -381,53 +381,53 @@ function getRouteOptions(
 /**
  * Parse page component at `absolutePath` and extract argument passed to `defineI18nRoute()`
  */
-function getI18nRouteConfig(absolutePath: string, vfs: Record<string, string> = {}) {
+function getI18nRouteConfig(absolutePath: string) {
   let extract: false | ComputedRouteOptions | undefined = undefined
 
   try {
-    const content = absolutePath in vfs ? vfs[absolutePath]! : readFileSync(absolutePath, 'utf-8')
+    const content = readFileSync(absolutePath, 'utf-8')
     if (!content.includes(DEFINE_I18N_ROUTE_FN)) return undefined
 
-    const { descriptor } = parseSFC(content)
-
-    const script = descriptor.scriptSetup || descriptor.script
+    const parsed = parse(content, { sourceMap: false })
+    const script = parsed.descriptor.scriptSetup || parsed.descriptor.script
     if (!script) return undefined
 
-    const lang = typeof script.attrs.lang === 'string' && /j|tsx/.test(script.attrs.lang) ? 'tsx' : 'ts'
-    let code = script.content
+    const lang = (typeof script.lang === 'string' ? script.lang : 'js') as 'js' | 'ts' | 'tsx'
+    parseAndWalk(script.content, absolutePath, {
+      parseOptions: {
+        lang: /j|tsx/.test(lang) ? 'tsx' : 'ts'
+      },
+      enter: node => {
+        if (extract != null) return
 
-    parseAndWalk(script.content, absolutePath.replace(/\.\w+$/, '.' + lang), node => {
-      if (extract != null) return
-
-      if (
-        node.type !== 'CallExpression' ||
-        node.callee.type !== 'Identifier' ||
-        node.callee.name !== DEFINE_I18N_ROUTE_FN
-      )
-        return
-
-      let routeArgument = node.arguments[0]
-      if (routeArgument == null) return
-
-      if (typeof script.attrs.lang === 'string' && /tsx?/.test(script.attrs.lang)) {
-        const transformed = transform('', script.content.slice(node.start, node.end).trim(), { lang })
-        code = transformed.code
-
-        if (transformed.errors.length) {
-          for (const error of transformed.errors) {
-            console.warn(`Error while transforming \`${DEFINE_I18N_ROUTE_FN}()\`` + error.codeframe)
-          }
+        if (
+          node.type !== 'CallExpression' ||
+          node.callee.type !== 'Identifier' ||
+          node.callee.name !== DEFINE_I18N_ROUTE_FN ||
+          node.arguments[0] == null
+        )
           return
+
+        let code = script.content
+        let routeArgument = node.arguments[0]
+        if (/tsx?/.test(lang)) {
+          const transformed = transform('', script.content.slice(node.start, node.end).trim(), { lang })
+          code = transformed.code
+
+          if (transformed.errors.length) {
+            for (const error of transformed.errors) {
+              console.warn(`Error while transforming \`${DEFINE_I18N_ROUTE_FN}()\`` + error.codeframe)
+            }
+            return
+          }
+
+          // we already know that the first statement is a call expression
+          const parsed = parseSync('', code, { lang: 'js' }).program.body[0]! as ExpressionStatement
+          routeArgument = (parsed.expression as CallExpression).arguments[0] as ObjectExpression
         }
 
-        // we already know that the first statement is a call expression
-        routeArgument = (
-          (parseSync('', transformed.code, { lang: 'js' }).program.body[0]! as ExpressionStatement)
-            .expression as CallExpression
-        ).arguments[0]! as ObjectExpression
+        extract = evalAndValidateValue(code.slice(routeArgument.start, routeArgument.end).trim())
       }
-
-      extract = evalAndValidateValue(code.slice(routeArgument.start, routeArgument.end).trim())
     })
   } catch (e: unknown) {
     console.warn(`[nuxt-i18n] Couldn't read component data at ${absolutePath}: (${(e as Error).message})`)
@@ -456,14 +456,14 @@ function evalAndValidateValue(value: string) {
   }
 
   // valid object
-  if (Object.prototype.toString.call(evaluated) === '[object Object]') {
+  if (toTypeString(evaluated) === '[object Object]') {
     if (evaluated.locales) {
       if (!Array.isArray(evaluated.locales) || evaluated.locales.some(locale => typeof locale !== 'string')) {
         console.warn(`[nuxt-i18n] Invalid locale option used with \`defineI18nRoute\`: ${value}`)
         return
       }
     }
-    if (evaluated.paths && Object.prototype.toString.call(evaluated.paths) !== '[object Object]') {
+    if (evaluated.paths && toTypeString(evaluated.paths) !== '[object Object]') {
       console.warn(`[nuxt-i18n] Invalid paths option used with \`defineI18nRoute\`: ${value}`)
       return
     }
