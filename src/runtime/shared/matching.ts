@@ -1,11 +1,21 @@
 import { joinURL, parsePath, withLeadingSlash } from 'ufo'
 import { createRouterMatcher } from 'vue-router'
-import { i18nPathToPath, pathToI18nConfig } from '#build/i18n-route-resources.mjs'
+import { i18nPathToPath, pathToI18nConfig, regexPaths } from '#build/i18n-route-resources.mjs'
 
 const matcher = createRouterMatcher([], {})
 for (const path of Object.keys(i18nPathToPath)) {
   matcher.addRoute({ path, component: () => '', meta: {} })
 }
+
+const matcher2 = createRouterMatcher([], {})
+for (const path of regexPaths) {
+  matcher2.addRoute({ path, component: () => '', meta: {} })
+}
+
+console.log(
+  matcher2.resolve({ path: '/en/about' }, { path: '/', name: '', matched: [], params: {}, meta: {} }),
+  // matcher2.resolve({ path: '/disable' }, { path: '/', name: '', matched: [], params: {}, meta: {} }),
+)
 
 const getI18nPathToI18nPath = (path: string, locale: string) => {
   if (!path || !locale) { return }

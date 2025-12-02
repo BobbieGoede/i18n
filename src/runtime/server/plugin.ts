@@ -1,12 +1,12 @@
 import { stringify } from 'devalue'
 import { defineI18nMiddleware } from '@intlify/h3'
-import { defineNitroPlugin, useStorage } from 'nitropack/runtime'
+import { defineNitroPlugin, useRuntimeConfig, useStorage } from 'nitropack/runtime'
 import { initializeI18nContext, tryUseI18nContext, useI18nContext } from './context'
 import { createUserLocaleDetector } from './utils/locale-detector'
 import { pickNested } from './utils/messages-utils'
 import { isSupportedLocale } from '../shared/locales'
 import { setupVueI18nOptions } from '../shared/vue-i18n'
-import { joinURL } from 'ufo'
+import { joinURL, withLeadingSlash } from 'ufo'
 // @ts-expect-error virtual file
 import { appId } from '#internal/nuxt.config.mjs'
 import { localeDetector } from '#internal/i18n-locale-detector.mjs'
@@ -17,7 +17,7 @@ import { type H3Event, getRequestURL, sendRedirect, setCookie } from 'h3'
 import type { CoreOptions } from '@intlify/core'
 import { useDetectors } from '../shared/detection'
 import { domainFromLocale } from '../shared/domain'
-import { isExistingNuxtRoute, matchLocalized } from '../shared/matching'
+import { matchLocalized } from '../shared/matching'
 
 function* detect(
   detectors: ReturnType<typeof useDetectors>,
@@ -87,58 +87,55 @@ export default defineNitroPlugin(async (nitro) => {
   }
 
   function resolveRedirectPath(
-    event: H3Event,
+    eventPath: string,
     path: string | undefined,
     pathLocale: string | undefined,
     defaultLocale: string,
     detector: ReturnType<typeof useDetectors>,
   ) {
-    let locale = ''
-    for (const detected of detect(detector, detection, event.path)) {
+    const resolved = { path: undefined as string | undefined, code: 302, locale: '' }
+    for (const detected of detect(detector, detection, eventPath)) {
       if (detected.locale && isSupportedLocale(detected.locale)) {
-        locale = detected.locale
+        resolved.locale = detected.locale
         break
       }
     }
-    locale ||= defaultLocale
+    resolved.locale ||= defaultLocale
 
     function getLocalizedMatch(locale: string) {
       const res = matchLocalized(path || '/', locale, defaultLocale)
-      if (res && res !== event.path) {
+      if (res && res !== eventPath) {
         return res
       }
     }
 
-    let resolvedPath = undefined
-    let redirectCode = 302
-
-    const requestURL = getRequestURL(event)
-    if (rootRedirect && requestURL.pathname === '/') {
-      locale = (detection.enabled && locale) || defaultLocale
-      resolvedPath
+    if (rootRedirect && eventPath === '/') {
+      resolved.locale = (detection.enabled && resolved.locale) || defaultLocale
+      resolved.path
         = (isSupportedLocale(detector.route(rootRedirect.path)) && rootRedirect.path)
-          || matchLocalized(rootRedirect.path, locale, defaultLocale)
-      redirectCode = rootRedirect.code
+        || matchLocalized(rootRedirect.path, resolved.locale, defaultLocale)
+      resolved.code = rootRedirect.code
     } else if (runtimeI18n.redirectStatusCode) {
-      redirectCode = runtimeI18n.redirectStatusCode
+      resolved.code = runtimeI18n.redirectStatusCode
     }
 
     switch (detection.redirectOn) {
       case 'root':
-        if (requestURL.pathname !== '/') { break }
+        if (eventPath !== '/') { break }
       // fallthrough (root has no prefix)
       case 'no prefix':
         if (pathLocale) { break }
       // fallthrough to resolve
       case 'all':
-        resolvedPath ??= getLocalizedMatch(locale)
+        resolved.path ??= getLocalizedMatch(resolved.locale)
         break
     }
 
-    if (requestURL.pathname === '/' && __I18N_STRATEGY__ === 'prefix') {
-      resolvedPath ??= getLocalizedMatch(defaultLocale)
+    if (eventPath === '/' && __I18N_STRATEGY__ === 'prefix') {
+      resolved.path ??= getLocalizedMatch(resolved.locale)
     }
-    return { path: resolvedPath, code: redirectCode, locale }
+
+    return resolved
   }
 
   const baseUrlGetter = createBaseUrlGetter()
@@ -147,30 +144,29 @@ export default defineNitroPlugin(async (nitro) => {
     await initializeI18nContext(event)
   })
 
+  // render:before is only called before a nuxt page is rendered
   nitro.hooks.hook('render:before', async ({ event }) => {
     if (!__I18N_SERVER_REDIRECT__) { return }
 
     const ctx = import.meta.prerender && !event.context.nuxtI18n ? await initializeI18nContext(event) : useI18nContext(event)
     const url = getRequestURL(event)
     const detector = useDetectors(event, detection)
-    const localeSegment = detector.route(event.path)
+    const base = baseUrlGetter(event, ctx.vueI18nOptions!.defaultLocale) || useRuntimeConfig().app.baseURL || '/'
+    const withoutBase = withLeadingSlash(url.pathname.replace(base, ''))
+    const localeSegment = detector.route(withoutBase)
     const pathLocale = (isSupportedLocale(localeSegment) && localeSegment) || undefined
-    const path = (pathLocale && event.path.slice(pathLocale.length + 1)) ?? event.path
+    const path = ((pathLocale && withoutBase.slice(pathLocale.length + 1)) ?? withoutBase)
 
     // attempt to only run i18n detection for nuxt pages and i18n server routes
-    if (!url.pathname.includes(__I18N_SERVER_ROUTE__) && !isExistingNuxtRoute(path)) {
+    if (path === '' || path.startsWith('/__nuxt_error') || path.startsWith('/favicon.ico')) {
       return
     }
 
-    const resolved = resolveRedirectPath(event, path, pathLocale, ctx.vueI18nOptions!.defaultLocale, detector)
-    if (resolved.path && resolved.path !== url.pathname) {
+    const resolved = resolveRedirectPath(withoutBase, path, pathLocale, ctx.vueI18nOptions!.defaultLocale, detector)
+    if (resolved.path && resolved.path !== path) {
       ctx.detectLocale = resolved.locale
       detection.useCookie && setCookie(event, detection.cookieKey, resolved.locale, cookieOptions)
-      await sendRedirect(
-        event,
-        joinURL(baseUrlGetter(event, ctx.vueI18nOptions!.defaultLocale), resolved.path + url.search),
-        resolved.code,
-      )
+      await sendRedirect(event, joinURL(base, resolved.path + url.search), resolved.code)
       return
     }
   })
