@@ -6,11 +6,9 @@ import { localePath, localeRoute, switchLocalePath } from '../routing/routing'
 import type { Ref } from 'vue'
 import type { Locale } from 'vue-i18n'
 import type { I18nHeadMetaInfo, I18nHeadOptions, SeoAttributesOptions } from '#internal-i18n-types'
-import type { RouteLocationAsRelativeI18n, RouteLocationAsRelativeTyped, RouteLocationAsRelativeTypedI18n, RouteLocationResolvedI18n, RouteMap, RouteMapGeneric, RouteMapI18n, TypesConfig } from 'vue-router'
+import type { RouteLocationAsRelativeI18n, RouteLocationResolvedI18n, RouteMap, RouteMapI18n } from 'vue-router'
 import type { CompatRoute, I18nRouteMeta, RouteLocationGenericPath } from '../types'
 import type { NuxtApp } from '#app'
-
-type RouteMapI18nResolved = TypesConfig extends Record<'RouteNamedMapI18n', infer RouteNamedMap> ? RouteNamedMap : RouteMapGeneric
 
 export * from 'vue-i18n'
 export * from './shared'
@@ -147,7 +145,7 @@ export function useRouteBaseName(nuxtApp: NuxtApp = useNuxtApp()): RouteBaseName
  * @returns Returns the localized path for the given route.
  */
 export type LocalePathFunction = <Name extends keyof RouteMapI18n = keyof RouteMapI18n>(
-  route: Name | RouteLocationAsRelativeTyped<RouteMapI18nResolved, Name>,
+  route: Name | RouteLocationI18nGenericPath,
   locale?: Locale,
 ) => string
 
@@ -174,7 +172,7 @@ export function useLocalePath(nuxtApp: NuxtApp = useNuxtApp()): LocalePathFuncti
  * @returns A route or `undefined` if no route was resolved.
  */
 export type LocaleRouteFunction = <Name extends keyof RouteMapI18n = keyof RouteMapI18n>(
-  route: Name | RouteLocationAsRelativeTypedI18n<RouteMapI18nResolved, Name>,
+  route: Name | RouteLocationI18nGenericPath,
   locale?: Locale,
 ) => RouteLocationResolvedI18n<Name> | undefined
 
